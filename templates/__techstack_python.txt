@@ -1,0 +1,8 @@
+
+
+## TECH STACK (PYTHON)
+- APIs & CLIs: FastAPI and Typer
+- HTTP Client: httpx for both sync and async requests.
+- Logging: structlog for structured (JSON) logging, using the standard `logging` library as the backend.
+- Configuration: TOML for config files. `pydantic-settings` where appropriate.
+- Subprocesses: `subprocess.run()` with `check=True` and list-based arguments.

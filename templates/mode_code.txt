@@ -1,0 +1,5 @@
+
+# CRITICAL RULES
+1.  NO COMMENTARY: You MUST NOT include any conversational text, introductions (e.g., "Here is the code..."), explanations, or concluding remarks.
+2.  NO MARKDOWN FENCES: You MUST NOT enclose the output in Markdown code fences (e.g., ```python).
+3.  RAW OUTPUT ONLY: The entire response must be immediately parsable as valid code or pseudocode, with no extraneous characters or text whatsoever.
