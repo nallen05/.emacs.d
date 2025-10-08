@@ -757,11 +757,17 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
 
 (defun necromancer (&optional skip-edit-task)
   (interactive)
+
+  ;; set input defaults
   (unless necromancer--input-manner
     (setq necromancer--input-manner
           (if (use-region-p)
               0
             1)))
+  ;; set output defaults
+  (unless necromancer--output-manner
+    (setq necromancer--output-manner 1))
+
   (force-mode-line-update t)
   (when skip-edit-task
     (setf necromancer--task nil))
@@ -789,7 +795,7 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
 
 (defun necromancer--generate-state-string ()
   (if necromancer-mode
-      (format " [Necro:%s,%s%s]"
+      (format " Necro:%s,%s%s"
               (cond
                ((equal necromancer--role "architect") "arch")
                (t                                     necromancer--role))
