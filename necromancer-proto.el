@@ -2,17 +2,27 @@
 
 
 
-;; C-c ~             change model
+;; C-c ~             edit model
 ;; C-c g             edit goal
+;; C-c r             edit role
+;; C-c m             edit mode
 ;; C-c c             edit context
-
-
-;; C-c f             insert file into context
-;; C-c b             insert buffer into context
-
+;; C-c RET           run necromancer (it will first launch edit task)
+;;
 ;; C-c s <var>       within this buffer, shadow <var>
 ;; C-c S <var>       kill the buffer local shadow; global will be used instead
 
+
+;;;;;;;;;;;;; WITHIN EDIT STRING MENU ;;;;;;;;;;;;;;;;;;
+;;
+;; C-c DEL           abort
+;; C-c -             run: no context. Only the TASK description & selected REGION
+;; C-c 0             run: also include GOAL & CONTEXT
+;; C-c 1             run: also include the current buffer PREAMBLE (range before the point/region).
+;; C-c 2             run: also include the current buffer POSTAMBLE (range after the point/region).
+;; C-c RET           submit
+;; C-c f             insert file reference
+;; C-c b             insert buffer reference
 
 
 ;; SCRATCH
@@ -91,8 +101,6 @@
 (global-set-key (kbd "C-c S") 'necromancer--kill-local-variable)
 
 
-
-
 ;; input: model
 
 (defvar necromancer--model "gemini-2.5-flash-lite")
@@ -104,15 +112,18 @@
 
 (defun necromancer--set-model ()
   (interactive)
-  (let ((choice (completing-read
-		 (concat "Select model (current: "
-			 (propertize necromancer--model 'face 'bold)
-			 ") :")
-                 necromancer--known-models
-                 nil                      ;; predicate (not needed here)
-                 t                        ;; require match
-                 nil)))                   ;; no initial value
-    (setq necromancer--model choice)
+  (let ((choice (completing-read (concat "Select model (current: "
+			                                   (propertize necromancer--model 'face 'bold)
+			                                   ") :")
+                                 necromancer--known-models
+                                 nil                      ;; predicate (not needed here)
+                                 t                        ;; require match
+                                 nil)))                   ;; no initial value
+    (setq necromancer--model
+          (cond
+           ((member choice necromancer--known-models) choice)
+           ((member necromancer--model necromancer--known-models) necromancer--model)
+           (t (first necromancer--known-models))))
     (message "Model set to: %s" necromancer--model)))
 
 (global-set-key (kbd "C-c ~") 'necromancer--set-model)
@@ -135,61 +146,86 @@
 	   (use-local-map (copy-keymap text-mode-map))
 
 	   ;; Prevent recentering and blank space scrolling
-            (setq-local scroll-conservatively 101)  ; Never recenter
-            (setq-local scroll-margin 0)            ; No margin around point
-            (setq-local maximum-scroll-margin 0)    ; Disable margin
-            (setq-local scroll-step 1)              ; Scroll one line at a time
+           (setq-local scroll-conservatively 101)  ; Never recenter
+           (setq-local scroll-margin 0)            ; No margin around point
+           (setq-local maximum-scroll-margin 0)    ; Disable margin
+           (setq-local scroll-step 1)              ; Scroll one line at a time
 
-
-	   ;; keybindings
-	   (local-set-key (kbd "C-c RET")
-			  (lambda ()
-			    (interactive)
-			    (exit-recursive-edit)))
-	   (local-set-key (kbd "C-c DEL")
-			  (lambda ()
-			    (interactive)
-			    (abort-recursive-edit)))
-	   (message "%s C-c RET to finish; C-c DEL to cancel" prompt)
-
-	   ;; Display with initial reasonable size
-	   (setq edit-window
-                 (display-buffer-at-bottom
+	    
+	    ;; keybindings
+	    (local-set-key (kbd "C-c -")
+			   (lambda ()
+			     (interactive)
+			     (setq necromancer--input-manner -1)
+			     (exit-recursive-edit)))
+	    (local-set-key (kbd "C-c 0")
+			   (lambda ()
+			     (interactive)
+			     (setq necromancer--input-manner 0)
+			     (exit-recursive-edit)))
+	    (local-set-key (kbd "C-c 1")
+			   (lambda ()
+			     (interactive)
+			     (setq necromancer--input-manner 1)
+			     (exit-recursive-edit)))
+	    (local-set-key (kbd "C-c 2")
+			   (lambda ()
+			     (interactive)
+			     (setq necromancer--input-manner 2)
+			     (exit-recursive-edit)))
+	    (local-set-key (kbd "C-c RET")
+			   (lambda ()
+			     (interactive)
+			     (setq necromancer--input-manner nil)
+			     (exit-recursive-edit)))
+	    (local-set-key (kbd "C-c DEL")
+			   (lambda ()
+			     (interactive)
+			     (abort-recursive-edit)))
+	    (local-set-key (kbd "C-c f")
+			   'necromancer--insert-file-to-context)
+	    (local-set-key (kbd "C-c b")
+			   'necromancer--insert-buffer-to-context)
+	    (message "%s C-c RET to finish; C-c DEL to cancel" prompt)
+	    
+	    ;; Display with initial reasonable size
+	    (setq edit-window
+                  (display-buffer-at-bottom
                    (current-buffer)
                    '((window-height . 10))))
             (select-window edit-window)
-	   
-	   ;; Add hook to resize after each change
-           (add-hook 'post-command-hook
-                     (lambda ()
-                       (when (and (eq (current-buffer) (get-buffer buffer-name))
-				  (get-buffer-window (current-buffer)))
-                         (fit-window-to-buffer 
-                          (get-buffer-window (current-buffer))
-                          15   ; max 15 lines
-                          5))) ; min 5 lines
-                     nil t)  ; Buffer-local hook
+	    
+	    ;; Add hook to resize after each change
+            (add-hook 'post-command-hook
+                      (lambda ()
+			(when (and (eq (current-buffer) (get-buffer buffer-name))
+				   (get-buffer-window (current-buffer)))
+                          (fit-window-to-buffer 
+                           (get-buffer-window (current-buffer))
+                           15   ; max 15 lines
+                           5))) ; min 5 lines
+                      nil t)  ; Buffer-local hook
+	    
+	    (select-window edit-window)
 
-	   (select-window edit-window)
-
 	   
-	   ;; Handle abort
-	   (condition-case nil
-	       (progn
-		 (recursive-edit)
-		 ;; ensure we're still in the right buffer
-		 (when (buffer-live-p (get-buffer buffer-name))
-		   (with-current-buffer buffer-name
-		     (setq result 
-			   (buffer-substring-no-properties (point-min) (point-max))))))
-	     (quit (setq result nil)))))
+	    ;; Handle abort
+	    (condition-case nil
+		(progn
+		  (recursive-edit)
+		  ;; ensure we're still in the right buffer
+		  (when (buffer-live-p (get-buffer buffer-name))
+		    (with-current-buffer buffer-name
+		      (setq result 
+			    (buffer-substring-no-properties (point-min) (point-max))))))
+	      (quit (setq result nil)))))
 
      ;; Cleanup: window first, then buffer
      (when (and edit-window (window-live-p edit-window))
-        (delete-window edit-window))
+       (delete-window edit-window))
      (when (get-buffer buffer-name)
        (kill-buffer buffer-name)))
-
+   
    result))
 
 (defvar necromancer--goal nil)
@@ -203,13 +239,7 @@
       (setq necromancer--goal new-value)
       (message "Goal updated"))))
 
-(defun necromancer--ensure-goal ()
-  (or necromancer--goal
-      (while (not necromancer--goal)
-	(necromancer--edit-goal))
-      necromancer--goal))
-
-(global-set-key (kbd "C-bc g") 'necromancer--edit-goal)
+(global-set-key (kbd "C-c g") 'necromancer--edit-goal)
 
 (defvar necromancer--context nil)
 
@@ -222,28 +252,22 @@
       (setq necromancer--context new-value)
       (message "Context updated"))))
 
-(defun necromancer--ensure-context ()
-  (or necromancer--context
-      (while (not necromancer--context)
-	(necromancer--edit-context))
-      necromancer--context))
-
 (global-set-key (kbd "C-c c") 'necromancer--edit-context)
 
 
 
 ;; inserting files & buffers into the context
 
-(defun necromancer--insert-file-to-context ()
+(defun necromancer--insert-file-reference ()
   (interactive)
   (let ((file (read-file-name "Select a file to insert: "
 			      (expand-file-name necromancer--project-dir))))
     (when file
       (insert (format "{{%s}}" file)))))
 
-(global-set-key (kbd "C-c f") 'necromancer--insert-file-to-context)
+;; (global-set-key (kbd "C-c f") 'necromancer--insert-file-to-context)
 
-(defun necromancer--insert-buffer-to-context ()
+(defun necromancer--insert-buffer-reference ()
   (interactive)
   (let ((buffer-name (read-buffer "Select a buffer to insert: "
                                   nil  ; no default buffer
@@ -251,7 +275,7 @@
     (when buffer-name
       (insert (format "{{%s}}" buffer-name)))))
 
-(global-set-key (kbd "C-c b") 'necromancer--insert-buffer-to-context)
+;; (global-set-key (kbd "C-c b") 'necromancer--insert-buffer-to-context)
 
 
 (defvar necromancer--reference-prefix-template
@@ -318,7 +342,7 @@
 (defvar necromancer--role "dev")
 
 (defvar necromancer--known-roles
-  '("arch"
+  '("architect"
     "dev"
     "mlops"
     "panel"
@@ -327,43 +351,86 @@
 
 (defun necromancer--set-role ()
   (interactive)
-  (let ((choice (completing-read
-		 (concat "Select role (current: "
-			 (propertize necromancer--role 'face 'bold)
-			 "): ")
-                 necromancer--known-roles
-                 nil                      ;; predicate (not needed here)
-                 t                        ;; require match
-                 nil)))                   ;; no initial value
-    (setq necromancer--role choice)
+  (let ((choice (completing-read (concat "Select role (current: "
+			                                   (propertize necromancer--role 'face 'bold)
+			                                   "): ")
+                                 necromancer--known-roles
+                                 nil                      ;; predicate (not needed here)
+                                 t                        ;; require match
+                                 nil)))                   ;; no initial value
+    (setq necromancer--role
+          (cond
+           ((member choice necromancer--known-roles) choice)
+           ((member necromancer--role necromancer--known-roles) necromancer--model)
+           (t (first necromancer--known-roles))))
     (message "Role set to: %s" necromancer--role)))
 
-(global-set-key (kbd "C-c R") 'necromancer--set-role)
+(global-set-key (kbd "C-c r") 'necromancer--set-role)
 
 (defvar necromancer--mode "code")
 
 (defvar necromancer--known-modes
   '("answer"
     "code"
-    "review"
-    "panel"))
+    "review_code"
+    "review_design"
+    "panel"
+    "sketch"))
 
 (defun necromancer--set-mode ()
   (interactive)
-  (let ((choice (completing-read
-		 (concat "Select mode (current: "
-			 (propertize necromancer--mode 'face 'bold)
-			 "): ")
-                 necromancer--known-modes
-                 nil                      ;; predicate (not needed here)
-                 t                        ;; require match
-                 nil)))                   ;; no initial value
-    (setq necromancer--mode choice)
+  (let ((choice (completing-read (concat "Select mode (current: "
+			                                   (propertize necromancer--mode 'face 'bold)
+			                                   "): ")
+                                 necromancer--known-modes
+                                 nil                      ;; predicate (not needed here)
+                                 t                        ;; require match
+                                 nil)))                   ;; no initial value
+    (setq necromancer--mode
+          (cond
+           ((member choice necromancer--known-modes) choice)
+           ((member necromancer--role necromancer--known-modes) necromancer--mode)
+           (t (first necromancer--known-modes))))
     (message "Mode set to: %s" necromancer--mode)))
 
-(global-set-key (kbd "C-c M") 'necromancer--set-mode)
+(global-set-key (kbd "C-c m") 'necromancer--set-mode)
+
+;; don't change these, they match strings hard coded in templates
+(defun necromancer--annotate-task ()
+  (cond
+   ((string-equal necromancer--mode "answer")        "QUERY")
+   ((string-equal necromancer--mode "code")          "CODING TASK")
+   ((string-equal necromancer--mode "panel")         "DISCUSSION")
+   ((string-equal necromancer--mode "review_code")   "CODE REVIEW TASK")
+   ((string-equal necromancer--mode "review_design") "DESIGN REVIEW TASK")
+   ((string-equal necromancer--mode "sketch")        "DESIGN TASK")))
+
+;; don't change these, they match strings hard coded in templates
+(defun necromancer--annotate-region ()
+  (cond
+   ((string-equal necromancer--mode "answer")        "QUERY CONTEXT")
+   ((string-equal necromancer--mode "code")          "REFACTOR")
+   ((string-equal necromancer--mode "panel")         "DISCUSSION FOCUS")
+   ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
+   ((string-equal necromancer--mode "review_design") "DESIGN FOR REVIEW")
+   ((string-equal necromancer--mode "sketch")        "DESIGN REFINEMENT")))
+ 
 
 
+
+
+;; input: task
+
+(defvar necromancer--task nil)
+
+(defun necromancer--edit-task ()
+  (interactive)
+  (let ((new-value (necromancer--read-multiline-string 
+                    (format "Edit %s: " (necromancer--annotate-task))
+		    nil)))
+    (when new-value  ; Only update if not aborted
+      (setq necromancer--task new-value)
+      (message (format "%s updated" (necromancer--annotate-task))))))
 
 
 ;; building prompts
@@ -374,117 +441,168 @@
                     necromancer--template-dir))
         (mode-file (expand-file-name 
                     (concat "mode_" necromancer--mode ".txt")
-                    necromancer--template-dir)))
+                    necromancer--template-dir))
+	(region-file (when (use-region-p)
+		       (expand-file-name 
+			(concat "region_" necromancer--mode ".txt")
+			necromancer--template-dir))))
     ;; Work with buffer without displaying it
     (with-current-buffer (get-buffer-create buffer-name)
       (erase-buffer)
       (insert-file-contents role-file)
       (goto-char (point-max))
       (insert "\n")
-      (insert-file-contents mode-file))))
+      (insert-file-contents mode-file)
+      (when region-file
+	(goto-char (point-max))
+	(insert "\n")
+        (insert-file-contents region-file)))))
+
+(defun necromancer--string-empty-p (str)
+  (or (zerop (length str))
+      (string-empty-p (string-trim str))))
 
 (defun necromancer--build-user-prompt (&optional input)
   (let ((buffer-name necromancer--user-prompt-buffer)
-        (source-buffer (current-buffer))  ; Save reference before switching buffers
-        (task (read-string "Task: "))
-	(input (or input 1)))
+        (source-buffer (current-buffer))
+        (input (or input 1))
+        ;; Capture region info before switching buffers
+        (has-region (use-region-p))
+        (region-start (and (use-region-p) (region-beginning)))
+        (region-end (and (use-region-p) (region-end))))
     (with-current-buffer (get-buffer-create buffer-name)
       (erase-buffer)
 
-      ;; insert goal & context
+      ;; if input >= 0, insert goal string ------------------------------------
       (when (>= input 0)
-	(unless (zerop (length necromancer--goal))
-	  (insert "# GOAL \n")
-	  (insert (necromancer--expand-references necromancer--goal)))
-	(unless (zerop (length necromancer--context))
-	  (insert "\n\n")
-	  (insert "# CONTEXT \n")
-	  (insert (necromancer--expand-references necromancer--context)))
-	(insert "\n\n"))
+        (unless (necromancer--string-empty-p necromancer--goal)
+          (insert "# GOAL \n")
+          (insert (necromancer--expand-references necromancer--goal))
+	  (insert "\n")))
 
-      ;; insert preamble from source buffer (start to point)
-      (when (>= input 1)
-	(let ((current-file-name (buffer-file-name source-buffer)))
-	  (insert (format "\n## %s: %s"
-			  (if current-file-name
-			      "File"
-			    "Buffer")
-			  (or current-file-name
-			      (buffer-name source-buffer))))
-	  (insert "\n```")
-	  (insert (with-current-buffer source-buffer
-                    (buffer-substring-no-properties (point-min) (point)))))
-      
-	;; if requested, also add demarcator and postamble
-	(when (>= input 2)
-;;          (insert "\n# ---------- insert task output ----------\n")
-          (insert (with-current-buffer source-buffer
-                    (buffer-substring-no-properties (point) (point-max))))
-	  (insert "\n"))
-	(insert "\n```")
+      ;; if input >= 0, insert context string ---------------------------------
+      (when (and (>= input 0)
+		 (not (necromancer--string-empty-p necromancer--context)))
+	(insert "\n")
+	(insert "\n# CONTEXT\n")
+        (insert (necromancer--expand-references necromancer--context))
 	(insert "\n"))
-      (insert "\n")
-      (insert "# TASK \n")
-      (insert task))))
 
+      (if (<= input 0)
+	  
+	  ;; if input <= 0, insert just the region -----------------------------
+	  (when has-region
+	    (when (necromancer--string-empty-p necromancer--task)
+	      (insert "\n")
+	      (insert (format "# %s \n" (necromancer--annotate-task))))
+	    (insert (format "\n# START %s\n"
+			    (necromancer--annotate-region)))
+            (insert (with-current-buffer source-buffer
+		      (buffer-substring-no-properties region-start region-end)))
+	    (insert (format "\n# END %s\n"
+			    (necromancer--annotate-region)))
+	    (insert "\n"))
 
+	(when (>= input 1)
+	  (when (necromancer--string-empty-p necromancer--task)
+	    (insert "\n")
+	    (insert (format "# %s \n" (necromancer--annotate-task))))
+	  (let ((current-file-name (buffer-file-name source-buffer)))
+	    (if has-region
+		
+		;; input >= 1 && region, so insert annotated source buffer -------
+		(progn 
+		  (insert (format "\n## %s: %s"
+				  (if current-file-name "File" "Buffer")
+				  (or current-file-name (buffer-name source-buffer))))
+		  (insert "\n```")
+		  (insert (with-current-buffer source-buffer
+			    (buffer-substring-no-properties (point-min) region-start)))
+		  (insert (format "\n# START %s\n"
+				  (necromancer--annotate-region)))
+		  (insert (with-current-buffer source-buffer
+			    (buffer-substring-no-properties region-start region-end)))
+		  (insert (format "\n# END %s\n"
+				  (necromancer--annotate-region)))
+		  (when (>= input 2)
+		    (insert (with-current-buffer source-buffer
+			      (buffer-substring-no-properties region-end (point-max)))))
+		(insert "\n```")
+		(insert "\n"))
 
-;;;;;;;;;;;;;; work in progress below here
+	      
+	      ;; input >=1 && no region, so insert raw source buffer  -----------
+	      (progn
+		(insert (format "\n## %s: %s"
+				(if current-file-name "File" "Buffer")
+				(or current-file-name (buffer-name source-buffer))))
+		(insert "\n```")
+		(insert (with-current-buffer source-buffer
+			  (buffer-substring-no-properties (point-min) (point))))
+		
+		;; if requested, also add postamble
+		(when (>= input 2)
+		  (insert (with-current-buffer source-buffer
+			    (buffer-substring-no-properties (point) (point-max))))
+		  (insert "\n"))
+		(insert "\n```")
+		(insert "\n"))))))
 
- 
+      ;; insert the TASK ----------------------------------------------------------
+      (unless (necromancer--string-empty-p necromancer--task)
+	(insert "\n")
+	(insert (format "# %s \n" (necromancer--annotate-task)))
+	(insert (necromancer--expand-references necromancer--task))
+	(insert "\n")))))
+
 (defvar necromancer--progress-timer nil)
 (defvar necromancer--progress-dots 0)
-
-
-
-
-(defun necromancer--stop-progress (&rest _)
-  "Clear the progress message."
-  (message "")
-  (remove-hook 'gptel-post-response-functions #'necromancer--stop-progress t))
 
 (defun necromancer--send ()
   "Send context buffer + region/buffer-to-point to LLM, rewrite selection."
   (interactive)
   (setq gptel-model necromancer--model)
   (setq gptel--num-messages-to-send 1)
-  (let* ((context-buf (get-buffer necromancer--buffer-context))
-         (context-text (if context-buf
-                           (with-current-buffer context-buf
-                             (buffer-substring-no-properties (point-min) (point-max)))
-                         ""))
+  (let* ((system-prompt-buffer (get-buffer necromancer--system-prompt-buffer))
+         (system-prompt-text (with-current-buffer system-prompt-buffer 
+                               (buffer-substring-no-properties (point-min) (point-max))))
+         (user-prompt-buffer (get-buffer necromancer--user-prompt-buffer))
+         (user-prompt-text (with-current-buffer user-prompt-buffer 
+                               (buffer-substring-no-properties (point-min) (point-max))))
          (has-region (use-region-p))
          (start (if has-region (region-beginning) (point-min)))
          (end (if has-region (region-end) (point)))
-         (user-text (buffer-substring-no-properties start end))
-         (combined-prompt (if context-text
-                              (concat context-text "\n\n---\n\n" user-text)
-                            user-text))
          (insert-pos (if has-region start (point))))
-    
+    (setq gptel--system-message system-prompt-text)
     (when has-region
       (delete-region start end))
-    
     (goto-char insert-pos)
-    
-    ;; Simple static message
-    (message "Thinking... (this may take a moment)")
-    
-    ;; Hook to clear message when done
-    (add-hook 'gptel-post-response-functions #'necromancer--stop-progress nil t)
-    
+    (message "Necromancing... (this may take a moment)")
     (setq-local gptel-include-reasoning necromancer--thinking-buffer)
-    
-    (gptel-request combined-prompt
+    (gptel-request user-prompt-text
       :buffer (current-buffer)
       :position (point-marker)
       :in-place t
       :stream t)))
 
+(defvar necromancer--input-manner nil
+  "controls how context is sent to necromancer:
+     -1     Least amount of context. Only the TASK description & selected REGION
+     0      Also include GOAL & CONTEXT
+     1      Also include the current buffer PREAMBLE (range before the point/region)
+     2      Also include the current buffer POSTAMBLE (range after the point/region)
+     NIL    If region selected, defaults to 0; otherwise defaults to 1
+   ")
 
 
+(defun necromancer ()
+  (interactive)
+  (necromancer--edit-task)
+  (necromancer--build-system-prompt)
+  (necromancer--build-user-prompt (or necromancer--input-manner
+				      (if (use-region-p)
+					  0
+					  1)))
+  (necromancer--send))
 
-
-
-
-
+(global-set-key (kbd "C-c RET") 'necromancer)
