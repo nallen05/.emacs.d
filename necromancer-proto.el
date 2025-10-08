@@ -154,7 +154,7 @@
 
 	    
 	    ;; keybindings
-	    (local-set-key (kbd "C-c RET")
+	    (local-set-key (kbd "C-c <return>")
 			   (lambda ()
 			     (interactive)
 			     (exit-recursive-edit)))
@@ -755,7 +755,7 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
    ")
 
 
-(defun necromancer ()
+(defun necromancer (&optional skip-edit-task)
   (interactive)
   (unless necromancer--input-manner
     (setq necromancer--input-manner
@@ -763,14 +763,26 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
               0
             1)))
   (force-mode-line-update t)
-  (when (necromancer--edit-task)
+  (when skip-edit-task
+    (setf necromancer--task nil))
+  (when (or skip-edit-task
+            (necromancer--edit-task))
     (necromancer--build-system-prompt)
     (necromancer--build-user-prompt necromancer--input-manner)
     (necromancer--send))
   (setf necromancer--input-manner nil)
   )
 
-(global-set-key (kbd "C-c RET") 'necromancer)
+(global-set-key (kbd "C-c <return>") 'necromancer)
+
+(defun necromancer-skip-task ()
+  (interactive)
+  (necromancer t))
+
+(global-set-key (kbd "C-c C-<return>") 'necromancer-skip-task)
+
+
+
 
 
 
