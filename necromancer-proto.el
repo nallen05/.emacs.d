@@ -689,33 +689,61 @@
 (defvar necromancer--progress-dots 0)
 
 (defun necromancer--send ()
-  "Send context buffer + region/buffer-to-point to LLM, rewrite selection."
+  "Send context buffer + region/buffer-to-point to LLM, rewrite selection.
+The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
+- NIL: Does all setup but does not send the GPTEL request.
+- -1: Inserts ABOVE the selected region (or at point if no region).
+- 0: Rewrites the selected region (or inserts at point if no region).
+- 1: Inserts BELOW the selected region (or at point if no region).
+- 2: Inserts at the end of the current buffer."
   (interactive)
   (setq gptel-model necromancer--model)
   (setq gptel--num-messages-to-send 1)
   (let* ((system-prompt-buffer (get-buffer necromancer--system-prompt-buffer))
-         (system-prompt-text (with-current-buffer system-prompt-buffer 
+         (system-prompt-text (with-current-buffer system-prompt-buffer
                                (buffer-substring-no-properties (point-min) (point-max))))
          (user-prompt-buffer (get-buffer necromancer--user-prompt-buffer))
-         (user-prompt-text (with-current-buffer user-prompt-buffer 
+         (user-prompt-text (with-current-buffer user-prompt-buffer
                                (buffer-substring-no-properties (point-min) (point-max))))
          (has-region (use-region-p))
-         (start (if has-region (region-beginning) (point-min)))
-         (end (if has-region (region-end) (point)))
-         (insert-pos (if has-region start (point))))
+         (region-start (if has-region (region-beginning) nil))
+         (region-end (if has-region (region-end) nil))
+         (original-point (point)) ; Capture original point for restoration or default insertion
+         (effective-insert-point nil)
+         (should-delete-region nil))
     (setq gptel--system-message system-prompt-text)
-    (when has-region
-      (delete-region start end))
-    (goto-char insert-pos)
-    (message "Necromancing... (this may take a moment)")
+
+    ;; Determine insertion strategy
+    (cond
+     ((null necromancer--output-manner)   ;; no op
+      (message "Necromancer: no_op")
+      (goto-char original-point))
+     ((eq necromancer--output-manner 0)   ;; rewrite
+      (setq should-delete-region has-region)
+      (setq effective-insert-point (if has-region region-start original-point)))
+     ((eq necromancer--output-manner -1)  ;; insert above
+      (setq effective-insert-point (if has-region region-start original-point)))
+     ((eq necromancer--output-manner 1)   ;; insert below
+      (setq effective-insert-point (if has-region region-end original-point)))
+     ((eq necromancer--output-manner 2)    ;; insert at end
+      (setq effective-insert-point (point-max)))
+     (t (error "Invalid NECROMANCER--OUTPUT-MANNER" )))
+
     (setq-local gptel-include-reasoning necromancer--thinking-buffer)
     (with-current-buffer necromancer--thinking-buffer
       (erase-buffer))
-    (gptel-request user-prompt-text
-      :buffer (current-buffer)
-      :position (point-marker)
-      :in-place t
-      :stream t)))
+    
+    (when necromancer--output-manner
+      (when should-delete-region
+        (delete-region region-start region-end))
+      (goto-char effective-insert-point)
+      (message "Necromancing... (this may take a moment)")
+      (gptel-request user-prompt-text
+        :buffer (current-buffer)
+        :position (point-marker) ; Insert at the current point
+        :in-place t
+        :stream t))))
+
 
 (defvar necromancer--input-manner nil
   "controls how context is sent to necromancer:
