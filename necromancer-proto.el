@@ -5,7 +5,7 @@
 ;; C-c ~             edit model
 ;; C-c g             edit goal
 ;; C-c r             edit role
-;; C-c m             edit mode
+;; C-c j             edit job mode
 ;; C-c c             edit context
 ;; C-c i             edit input manner (-1=region/task, 0=+goal/context, 1=+preamble, 2=+postamble)
 ;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, DEL=no_op)
@@ -742,5 +742,8 @@
 
 
 ;;   (force-mode-line-update)
+
+
+
 
 
