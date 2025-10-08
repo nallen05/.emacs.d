@@ -771,6 +771,7 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
     (necromancer--build-user-prompt necromancer--input-manner)
     (necromancer--send))
   (setf necromancer--input-manner nil)
+  (setf necromancer--output-manner nil)
   )
 
 (global-set-key (kbd "C-c <return>") 'necromancer)
