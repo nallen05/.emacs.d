@@ -1,5 +1,5 @@
 
-
+write a short python hello world
 
 
 ;; M-x necromancer-mode     turn on/off mode to show variables in mode line
@@ -11,8 +11,10 @@
 ;; C-c j             edit job mode
 ;; C-c c             edit context
 ;; C-c i             edit input manner (-1=region/task, 0=+goal/context, 1=+preamble, 2=+postamble)
-;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, DEL=no_op)
+;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, 3=sidebar, DEL=no_op)
 ;; C-c RET           run necromancer (it will first launch edit task)
+;; C-c s             open sidebar buffer (this window)
+;; C-c S             change sidebar buffer
 ;;
 ;; C-c s <var>       within this buffer, shadow <var>
 ;; C-c S <var>       kill the buffer local shadow; global will be used instead
@@ -55,6 +57,9 @@
 
 
 ;; buffers
+
+(defvar necromancer--sidebar-buffer "*necromancer-sidebar*"
+  "Responses can get routed here to avoid modifying the source buffer.")
 
 (defvar necromancer--edit-string-buffer "*necromancer-edit-string*"
   "Ephemeral buffer for editing multi-line strings.")
@@ -450,43 +455,52 @@
 
 ;; input: input-manner
 
-(defvar necromancer--input-manner-map
-  (make-sparse-keymap "Necromancer input: [-]region/task [0]+goal/context [1]+preamble [2]+postamble [RET]accept default"))
+(defvar necromancer--input-manner nil
+  "controls how context is sent to necromancer:
+     -1     Least amount of context. Only the TASK description & selected REGION
+     0      Also include GOAL & CONTEXT
+     1      Also include the current buffer PREAMBLE (range before the point/region)
+     2      Also include the current buffer POSTAMBLE (range after the point/region)
+     NIL    If region selected, defaults to 0; otherwise defaults to 1
+   ")
 
-(define-key necromancer--input-manner-map (kbd "-")
+(defvar necromancer--input-manner-map
+  (make-sparse-keymap "Include context: [n]one [c]ontext [p]reamble [t]ail [RET]accept_defaults"))
+
+(define-key necromancer--input-manner-map (kbd "n")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner -1)
     (force-mode-line-update t)
-    (message "Input mode: region, task")))
+    (message "No context. Just selected region & task, as provided")))
 
-(define-key necromancer--input-manner-map (kbd "0")
+(define-key necromancer--input-manner-map (kbd "c")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 0)
     (force-mode-line-update t)
-    (message "Input mode: goal, context, region, task")))
+    (message "Include goal & context")))
 
-(define-key necromancer--input-manner-map (kbd "1")
+(define-key necromancer--input-manner-map (kbd "p")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 1)
     (force-mode-line-update t)
-    (message "Input mode: goal, context, preamble, region, task")))
+    (message "Include goal, context, & preamble")))
 
-(define-key necromancer--input-manner-map (kbd "2")
+(define-key necromancer--input-manner-map (kbd "t")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 2)
     (force-mode-line-update t)
-    (message "Input mode: goal, context, preamble, region, postamble, task")))
+    (message "Include goal, context, & the entire source buffer")))
 
 (define-key necromancer--input-manner-map (kbd "RET")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner nil)
     (force-mode-line-update t)
-    (message "Input mode: accept defaults")))
+    (message "Accept defaults")))
 
 (global-set-key (kbd "C-c i") necromancer--input-manner-map)
 
@@ -496,56 +510,68 @@
 
 ;; input: output-manner
 
-(defvar necromancer--output-manner-map
-  (make-sparse-keymap "Necromancer output mode: [-]above [0]overwrite [1]below [2]eof [RET]accept defaults [DEL]no_op"))
+(defvar necromancer--output-manner nil
+  "controls how responses are inserted:
+     -1     insert ABOVE selected region
+     0      OVERWRITE selected region
+     1      insert AFTER selected region
+     2      insert at END of current buffer
+     3      insert at end of SIDEBAR buffer
+     NIL    before edit task: accept defaults; after edit task: no_op")
 
-(define-key necromancer--output-manner-map (kbd "-")
+(defvar necromancer--output-manner-map
+  (make-sparse-keymap "Insert responses: [a]bove [o]verwrite [b]elow [e]of [s]idebar [RET]default/no_op"))
+
+(define-key necromancer--output-manner-map (kbd "a")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner -1)
     (force-mode-line-update t)
     (message "Completion will be inserted ABOVE the selected region")))
 
-(define-key necromancer--output-manner-map (kbd "0")
+(define-key necromancer--output-manner-map (kbd "o")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 0)
     (force-mode-line-update t)
     (message "Completion will OVERWRITE the selected region")))
 
-(define-key necromancer--output-manner-map (kbd "1")
+(define-key necromancer--output-manner-map (kbd "b")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 1)
     (force-mode-line-update t)
     (message "Completion will be inserted BELOW the selected region")))
 
-(define-key necromancer--output-manner-map (kbd "2")
+(define-key necromancer--output-manner-map (kbd "e")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 2)
     (force-mode-line-update t)
     (message "Completion will be inserted at the END OF THE BUFFER")))
 
-(define-key necromancer--output-manner-map (kbd "RET")
+(define-key necromancer--output-manner-map (kbd "s")
   (lambda ()
     (interactive)
-    (setq necromancer--output-manner nil)
+    (setq necromancer--output-manner 3)
     (force-mode-line-update t)
-    (message "Output mode: accept defaults")))
+    (message "Completion will be inserted at the end of the SIDEBAR buffer")))
 
 (define-key necromancer--output-manner-map (kbd "RET")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner nil)
     (force-mode-line-update t)
-    (message "Ouput mode: None. Next command will be a no_op")))
+    (message "Default or no_op")))
+
+(define-key necromancer--output-manner-map (kbd "DEL")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner nil)
+    (force-mode-line-update t)
+    (message "Default or no_op")))
 
 (global-set-key (kbd "C-c o") necromancer--output-manner-map)
-
-
-
-
 
 
 ;; input: task
@@ -685,8 +711,29 @@
 	(insert (necromancer--expand-references necromancer--task))
 	(insert "\n")))))
 
-(defvar necromancer--progress-timer nil)
-(defvar necromancer--progress-dots 0)
+
+
+;; the sidebar buffer
+(defun necromancer--open-sidebar ()
+  (interactive)
+  (let ((buffer (get-buffer-create necromancer--sidebar-buffer)))
+    (switch-to-buffer-other-window buffer)))
+
+(global-set-key (kbd "C-c s") 'necromancer--open-sidebar)
+
+(defun necromancer--redirect-sidebar ()
+  (interactive)
+  (let ((buffer-name (read-buffer "Configure sidebar buffer: "
+                                  necromancer--sidebar-buffer
+                                  t))) ; require match to existing buffer
+    (when buffer-name
+      (setq necromancer--sidebar-buffer buffer-name))))
+
+(global-set-key (kbd "C-c S") 'necromancer--redirect-sidebar)
+
+
+
+
 
 (defun necromancer--send ()
   "Send context buffer + region/buffer-to-point to LLM, rewrite selection.
@@ -695,7 +742,10 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
 - -1: Inserts ABOVE the selected region (or at point if no region).
 - 0: Rewrites the selected region (or inserts at point if no region).
 - 1: Inserts BELOW the selected region (or at point if no region).
-- 2: Inserts at the end of the current buffer."
+- 2: Inserts at the end of the current buffer.
+- 3: Inserts at the end of the buffer specified by `necromancer--sidebar-buffer`.
+     The sidebar buffer is created if it doesn't exist and cleared if it does.
+     The current buffer is not switched."
   (interactive)
   (setq gptel-model necromancer--model)
   (setq gptel--num-messages-to-send 1)
@@ -710,10 +760,12 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
          (region-end (if has-region (region-end) nil))
          (original-point (point)) ; Capture original point for restoration or default insertion
          (effective-insert-point nil)
-         (should-delete-region nil))
+         (should-delete-region nil)
+         (target-buffer (current-buffer))
+         (target-position-marker (point-marker)))
     (setq gptel--system-message system-prompt-text)
 
-    ;; Determine insertion strategy
+    ;; Determine insertion strategy 
     (cond
      ((null necromancer--output-manner)   ;; no op
       (message "Necromancer: no_op")
@@ -725,34 +777,54 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
       (setq effective-insert-point (if has-region region-start original-point)))
      ((eq necromancer--output-manner 1)   ;; insert below
       (setq effective-insert-point (if has-region region-end original-point)))
-     ((eq necromancer--output-manner 2)    ;; insert at end
+     ((eq necromancer--output-manner 2)    ;; insert at end of current buffer
       (setq effective-insert-point (point-max)))
-     (t (error "Invalid NECROMANCER--OUTPUT-MANNER" )))
+     ((eq necromancer--output-manner 3)   ;; insert at end of sidebar buffer
+      (let* ((sidebar-buf-name necromancer--sidebar-buffer)
+             (sidebar-buf (get-buffer-create sidebar-buf-name)))
+        (unless sidebar-buf
+          ;; Create the buffer if it doesn't exist
+          (setq sidebar-buf (get-buffer-create sidebar-buf-name)))
+        ;; Perform operations on the sidebar buffer without switching to it
+        (with-current-buffer sidebar-buf
+          (erase-buffer) ; Clear existing content
+          ;; Set the target buffer and a marker at its end for gptel-request
+          (setq target-buffer sidebar-buf)
+          (setq target-position-marker (copy-marker (point-max) t))))) ; t for 'insert-before' behavior
+     (t (error "Invalid NECROMANCER--OUTPUT-MANNER")))
 
-    (setq-local gptel-include-reasoning necromancer--thinking-buffer)
-    (with-current-buffer necromancer--thinking-buffer
-      (erase-buffer))
-    
-    (when necromancer--output-manner
+    ;; setup in current buffer if called for
+    (when (and necromancer--output-manner
+               (not (eq necromancer--output-manner 3)))
       (when should-delete-region
         (delete-region region-start region-end))
       (goto-char effective-insert-point)
+      ;; Update the target position marker after point movement or region deletion
+      (setq target-position-marker (point-marker)))
+
+    (setq-local gptel-include-reasoning necromancer--thinking-buffer)
+    (with-current-buffer (get-buffer-create necromancer--thinking-buffer)
+      (erase-buffer))
+
+    ;; Only send the GPTEL request if output manner is not NIL
+    (when necromancer--output-manner
       (message "Necromancing... (this may take a moment)")
       (gptel-request user-prompt-text
-        :buffer (current-buffer)
-        :position (point-marker) ; Insert at the current point
+        :buffer target-buffer
+        :position target-position-marker ; Insert at the calculated or specified point/marker
         :in-place t
-        :stream t))))
+        :stream t
+        ))
+
+    ;; Restore original point, if updates happened in this buffer
+    (unless (eq necromancer--output-manner 3)
+      (goto-char original-point))))
 
 
-(defvar necromancer--input-manner nil
-  "controls how context is sent to necromancer:
-     -1     Least amount of context. Only the TASK description & selected REGION
-     0      Also include GOAL & CONTEXT
-     1      Also include the current buffer PREAMBLE (range before the point/region)
-     2      Also include the current buffer POSTAMBLE (range after the point/region)
-     NIL    If region selected, defaults to 0; otherwise defaults to 1
-   ")
+
+
+
+
 
 
 (defun necromancer (&optional skip-edit-task)
@@ -791,8 +863,6 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
 
 
 
-
-
 (defun necromancer--generate-state-string ()
   (if necromancer-mode
       (format " Necro:%s,%s%s"
@@ -808,8 +878,17 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
               (if (or necromancer--input-manner
                       necromancer--output-manner)
                   (format ",%s/%s"
-                          necromancer--input-manner
-                          necromancer--output-manner)
+                          (cond
+                            ((equal necromancer--input-manner -1) "n")
+                            ((equal necromancer--input-manner 0)  "c")
+                            ((equal necromancer--input-manner 1)  "p")
+                            ((equal necromancer--input-manner 2)  "t"))
+                          (cond
+                           ((equal necromancer--output-manner -1) "b")
+                           ((equal necromancer--output-manner 0)  "o")
+                           ((equal necromancer--output-manner 1)  "a")
+                           ((equal necromancer--output-manner 2)  "e")
+                           ((equal necromancer--output-manner 3)  "s")))
                 ""))
     ""))
 
