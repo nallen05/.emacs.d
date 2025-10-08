@@ -2,6 +2,9 @@
 
 
 
+;; M-x necromancer-mode     turn on/off mode to show variables in mode line
+
+
 ;; C-c ~             edit model
 ;; C-c g             edit goal
 ;; C-c r             edit role
@@ -333,30 +336,35 @@
   (lambda ()
     (interactive)
     (setq necromancer--role "architect")
+    (force-mode-line-update t)
     (message "Python solutions architect")))
 
 (define-key necromancer--role-map (kbd "d")
   (lambda ()
     (interactive)
     (setq necromancer--role "dev")
+    (force-mode-line-update t)
     (message "Pragmatic Python developer")))
 
 (define-key necromancer--role-map (kbd "m")
   (lambda ()
     (interactive)
     (setq necromancer--role "mlops")
+    (force-mode-line-update t)
     (message "ML Infrastructure Engineer")))
 
 (define-key necromancer--role-map (kbd "r")
   (lambda ()
     (interactive)
     (setq necromancer--role "sre")
+    (force-mode-line-update t)
     (message "Site Reliability Enginer (SRE)")))
 
 (define-key necromancer--role-map (kbd "s")
   (lambda ()
     (interactive)
     (setq necromancer--role "staff")
+    (force-mode-line-update t)
     (message "Staff Engineer for expert code/design reviews")))
 
 (global-set-key (kbd "C-c r") necromancer--role-map)
@@ -378,36 +386,42 @@
   (lambda ()
     (interactive)
     (setq necromancer--mode "code")
+    (force-mode-line-update t)
     (message "Coding mode")))
 
 (define-key necromancer--mode-map (kbd "q")
   (lambda ()
     (interactive)
     (setq necromancer--mode "answer")
+    (force-mode-line-update t)
     (message "Q&A mode")))
 
 (define-key necromancer--mode-map (kbd "C")
   (lambda ()
     (interactive)
     (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
     (message "Code review mode")))
 
 (define-key necromancer--mode-map (kbd "d")
   (lambda ()
     (interactive)
     (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
     (message "Design review mode")))
 
 (define-key necromancer--mode-map (kbd "p")
   (lambda ()
     (interactive)
     (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
     (message "Sketch psuedocode")))
 
 (define-key necromancer--mode-map (kbd "P")
   (lambda ()
     (interactive)
     (setq necromancer--mode "panel")
+    (force-mode-line-update t)
     (message "Panel of experts: ML infa + SRE + Solutions Architect")))
 
 (global-set-key (kbd "C-c j") necromancer--mode-map)
@@ -443,30 +457,35 @@
   (lambda ()
     (interactive)
     (setq necromancer--input-manner -1)
+    (force-mode-line-update t)
     (message "Input mode: region, task")))
 
 (define-key necromancer--input-manner-map (kbd "0")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 0)
+    (force-mode-line-update t)
     (message "Input mode: goal, context, region, task")))
 
 (define-key necromancer--input-manner-map (kbd "1")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 1)
+    (force-mode-line-update t)
     (message "Input mode: goal, context, preamble, region, task")))
 
 (define-key necromancer--input-manner-map (kbd "2")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner 2)
+    (force-mode-line-update t)
     (message "Input mode: goal, context, preamble, region, postamble, task")))
 
 (define-key necromancer--input-manner-map (kbd "RET")
   (lambda ()
     (interactive)
     (setq necromancer--input-manner nil)
+    (force-mode-line-update t)
     (message "Input mode: accept defaults")))
 
 (global-set-key (kbd "C-c i") necromancer--input-manner-map)
@@ -484,36 +503,42 @@
   (lambda ()
     (interactive)
     (setq necromancer--output-manner -1)
+    (force-mode-line-update t)
     (message "Completion will be inserted ABOVE the selected region")))
 
 (define-key necromancer--output-manner-map (kbd "0")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 0)
+    (force-mode-line-update t)
     (message "Completion will OVERWRITE the selected region")))
 
 (define-key necromancer--output-manner-map (kbd "1")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 1)
+    (force-mode-line-update t)
     (message "Completion will be inserted BELOW the selected region")))
 
 (define-key necromancer--output-manner-map (kbd "2")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner 2)
+    (force-mode-line-update t)
     (message "Completion will be inserted at the END OF THE BUFFER")))
 
 (define-key necromancer--output-manner-map (kbd "RET")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner nil)
+    (force-mode-line-update t)
     (message "Output mode: accept defaults")))
 
 (define-key necromancer--output-manner-map (kbd "RET")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner nil)
+    (force-mode-line-update t)
     (message "Ouput mode: None. Next command will be a no_op")))
 
 (global-set-key (kbd "C-c o") necromancer--output-manner-map)
@@ -534,7 +559,8 @@
 		    nil)))
     (when new-value  ; Only update if not aborted
       (setq necromancer--task new-value)
-      (message (format "%s updated" (necromancer--annotate-task))))))
+      (message (format "%s updated" (necromancer--annotate-task)))
+      t)))
 
 
 ;; building prompts
@@ -703,13 +729,16 @@
 
 (defun necromancer ()
   (interactive)
-  (necromancer--edit-task)
-  (necromancer--build-system-prompt)
-  (necromancer--build-user-prompt (or necromancer--input-manner
-				                              (if (use-region-p)
-					                                0
-					                              1)))
-  (necromancer--send)
+  (unless necromancer--input-manner
+    (setq necromancer--input-manner
+          (if (use-region-p)
+              0
+            1)))
+  (force-mode-line-update t)
+  (when (necromancer--edit-task)
+    (necromancer--build-system-prompt)
+    (necromancer--build-user-prompt necromancer--input-manner)
+    (necromancer--send))
   (setf necromancer--input-manner nil)
   )
 
@@ -719,7 +748,7 @@
 
 (defun necromancer--generate-state-string ()
   (if necromancer-mode
-      (format " Necro:%s/%s"
+      (format " [Necro:%s,%s%s]"
               (cond
                ((equal necromancer--role "architect") "arch")
                (t                                     necromancer--role))
@@ -729,19 +758,21 @@
                ((equal necromancer--mode "review_design")  "dr")
                ((equal necromancer--mode "sketch")         "pseudo")
                (t                                          necromancer--mode))
-              necromancer--role
-              necromancer--mode)
+              (if (or necromancer--input-manner
+                      necromancer--output-manner)
+                  (format ",%s/%s"
+                          necromancer--input-manner
+                          necromancer--output-manner)
+                ""))
     ""))
 
+;;   (force-mode-line-update)
 
 (define-minor-mode necromancer-mode
   "Display Necromancer variables in the mode line"
   :lighter (:eval (necromancer--generate-state-string))
   :global t
   :init-value nil)
-
-
-;;   (force-mode-line-update)
 
 
 
