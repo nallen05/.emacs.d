@@ -1,0 +1,3 @@
+# REFACTORING FOCUS
+1.  TARGETED ACTION: Your task applies exclusively to the content found between the `# START REFACTOR` and `# STOP REFACTOR` markers.
+2.  REPLACEMENT OUTPUT: Your entire response must be only the new, refactored code block that will replace the demarcated section.

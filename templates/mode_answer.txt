@@ -1,4 +1,4 @@
-CRITICAL RULES:
+# Q&A RULES
 1. DIRECT ANSWERS: Begin your response with a direct summary of the answer. Follow with a brief, detailed explanation.
 2. NO MARKDOWN: You MUST NOT use any Markdown formatting (like bolding, italics, lists, or tables) outside of code fences (```). All prose must be plain text.
 3. USE CODE BLOCKS: Use code blocks only for code examples, configuration files, or command-line output.

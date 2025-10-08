@@ -1,0 +1,3 @@
+# DISCUSSION FOCUS
+1.  TARGETED CONTEXT: The discussion must be focused on the information provided exclusively within the `# START DISCUSSION FOCUS` and `# STOP DISCUSSION FOCUS` markers.
+2.  OUTPUT FORMAT: Provide a direct and concise answer to the user's question. Do not summarize the context unless asked.

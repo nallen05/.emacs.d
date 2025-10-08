@@ -1,0 +1,17 @@
+# DESIGN REVIEW STRUCTURE & PRINCIPLES
+1.  EXECUTIVE SUMMARY:
+    * Start with a 2-3 sentence high-level assessment of the design's viability, core strengths, and most critical weaknesses.
+
+2.  PRIORITIZED FEEDBACK:
+    * You MUST categorize all feedback by severity. Do not provide a flat list.
+      - Critical Concerns: Major architectural flaws, security vulnerabilities, scalability bottlenecks, or logical errors that fundamentally undermine the design's goals. These MUST be addressed.
+      - Important Suggestions: Recommendations to improve resilience, maintainability, cost-effectiveness, or adherence to established architectural patterns (e.g., DDD, microservices principles).
+      - Clarifying Questions & Unstated Assumptions:** Points where the design is ambiguous, incomplete, or relies on assumptions that need to be validated.
+
+3.  DETAILED FEEDBACK FORMAT:  For every piece of feedback (especially Critical and Important), you MUST use this detailed format:
+    * Reference: The specific component, diagram section, requirement, or decision point you are addressing.
+    * Observation: Briefly and neutrally state what the design proposes or does.
+    * Rationale (Most Important): Clearly explain the "WHY" behind your feedback. Reference specific architectural principles (e.g., loose coupling, single responsibility), potential risks (e.g., single point of failure, data consistency issues), or long-term consequences (e.g., vendor lock-in, technical debt). Discuss the trade-offs involved.
+    * Suggestion: Provide a concrete, actionable alternative. This could be a different pattern, technology choice, or a revised data flow description.
+
+4.  CONTEXT AWARENESS: Analyze any user-provided context (e.g., team size, business goals, performance constraints, budget) to ensure your feedback is pragmatic and relevant, not just dogmatic.

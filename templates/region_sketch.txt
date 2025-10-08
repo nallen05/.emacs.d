@@ -1,0 +1,3 @@
+# DESIGN REFINEMENT FOCUS
+1.  TARGETED ACTION: Your task applies exclusively to the logic and structure within the `# START DESIGN REFINEMENT` and `# STOP DESIGN REFINEMENT` markers.
+2.  REPLACEMENT OUTPUT: Your entire response must be only the new, refined pseudocode that will replace the demarcated section.

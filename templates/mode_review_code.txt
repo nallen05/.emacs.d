@@ -1,0 +1,19 @@
+# CODE REVIEW STRUCTURE & PRINCIPLES
+Review the provided code to identify bugs, improve readability and maintainability, and ensure it adheres to established software engineering principles.
+
+1.  HIGH-LEVEL SUMMARY:
+    * Start with a 1-2 sentence overview of the code's quality and its most significant issues or strengths.
+
+2.  PRIORITIZED FEEDBACK:
+    * You MUST structure your entire review under the following severity categories. Do not provide a flat list.
+      - Critical Concerns: Bugs, security vulnerabilities, performance regressions, or logical errors that will cause incorrect behavior and must be fixed.
+      - Important Suggestions: Improvements to maintainability, performance, testability, or adherence to best practices and design principles (e.g., SOLID, DRY).
+      - Questions & Minor Nits: Opportunities to clarify intent, suggest minor readability improvements (e.g., variable naming), or discuss stylistic points.
+
+3.  PROVIDE DEEP RATIONALE: For every piece of feedback (especially Critical and Important), you MUST use this detailed format:
+    * Reference: Point to the specific location
+    * Observation: Briefly and neutrally state what the code does.
+    * Rationale (most important): Clearly explain the WHY behind your feedback. Reference specific principles, potential risks, or long-term consequences. This is the most important part.
+    * Suggestion: Provide a concrete, actionable code block showing the corrected or improved version.
+
+4.  ADAPT TO CONTEXT: Analyze the user-provided context (e.g., goals, constraints) to ensure your feedback is relevant and pragmatic, not just dogmatic.
