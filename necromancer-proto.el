@@ -7,6 +7,8 @@
 ;; C-c r             edit role
 ;; C-c m             edit mode
 ;; C-c c             edit context
+;; C-c i             edit input manner (-1=region/task, 0=+goal/context, 1=+preamble, 2=+postamble)
+;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, DEL=no_op)
 ;; C-c RET           run necromancer (it will first launch edit task)
 ;;
 ;; C-c s <var>       within this buffer, shadow <var>
@@ -16,10 +18,6 @@
 ;;;;;;;;;;;;; WITHIN EDIT STRING MENU ;;;;;;;;;;;;;;;;;;
 ;;
 ;; C-c DEL           abort
-;; C-c -             run: no context. Only the TASK description & selected REGION
-;; C-c 0             run: also include GOAL & CONTEXT
-;; C-c 1             run: also include the current buffer PREAMBLE (range before the point/region).
-;; C-c 2             run: also include the current buffer POSTAMBLE (range after the point/region).
 ;; C-c RET           submit
 ;; C-c f             insert file reference
 ;; C-c b             insert buffer reference
@@ -153,30 +151,9 @@
 
 	    
 	    ;; keybindings
-	    (local-set-key (kbd "C-c -")
-			   (lambda ()
-			     (interactive)
-			     (setq necromancer--input-manner -1)
-			     (exit-recursive-edit)))
-	    (local-set-key (kbd "C-c 0")
-			   (lambda ()
-			     (interactive)
-			     (setq necromancer--input-manner 0)
-			     (exit-recursive-edit)))
-	    (local-set-key (kbd "C-c 1")
-			   (lambda ()
-			     (interactive)
-			     (setq necromancer--input-manner 1)
-			     (exit-recursive-edit)))
-	    (local-set-key (kbd "C-c 2")
-			   (lambda ()
-			     (interactive)
-			     (setq necromancer--input-manner 2)
-			     (exit-recursive-edit)))
 	    (local-set-key (kbd "C-c RET")
 			   (lambda ()
 			     (interactive)
-			     (setq necromancer--input-manner nil)
 			     (exit-recursive-edit)))
 	    (local-set-key (kbd "C-c DEL")
 			   (lambda ()
@@ -337,7 +314,7 @@
 
 
 
-;; inputs: role & mode
+;; inputs: role & job
 
 (defvar necromancer--role "dev")
 
@@ -349,23 +326,40 @@
     "sre"
     "staff"))
 
-(defun necromancer--set-role ()
-  (interactive)
-  (let ((choice (completing-read (concat "Select role (current: "
-			                                   (propertize necromancer--role 'face 'bold)
-			                                   "): ")
-                                 necromancer--known-roles
-                                 nil                      ;; predicate (not needed here)
-                                 t                        ;; require match
-                                 nil)))                   ;; no initial value
-    (setq necromancer--role
-          (cond
-           ((member choice necromancer--known-roles) choice)
-           ((member necromancer--role necromancer--known-roles) necromancer--model)
-           (t (first necromancer--known-roles))))
-    (message "Role set to: %s" necromancer--role)))
+(defvar necromancer--role-map
+  (make-sparse-keymap "Choose role: [a]rchitect [d]ev [m]lops s[r]e [s]taff"))
 
-(global-set-key (kbd "C-c r") 'necromancer--set-role)
+(define-key necromancer--role-map (kbd "a")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "architect")
+    (message "Python solutions architect")))
+
+(define-key necromancer--role-map (kbd "d")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "dev")
+    (message "Pragmatic Python developer")))
+
+(define-key necromancer--role-map (kbd "m")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "mlops")
+    (message "ML Infrastructure Engineer")))
+
+(define-key necromancer--role-map (kbd "r")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "sre")
+    (message "Site Reliability Enginer (SRE)")))
+
+(define-key necromancer--role-map (kbd "s")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "staff")
+    (message "Staff Engineer for expert code/design reviews")))
+
+(global-set-key (kbd "C-c r") necromancer--role-map)
 
 (defvar necromancer--mode "code")
 
@@ -377,23 +371,47 @@
     "panel"
     "sketch"))
 
-(defun necromancer--set-mode ()
-  (interactive)
-  (let ((choice (completing-read (concat "Select mode (current: "
-			                                   (propertize necromancer--mode 'face 'bold)
-			                                   "): ")
-                                 necromancer--known-modes
-                                 nil                      ;; predicate (not needed here)
-                                 t                        ;; require match
-                                 nil)))                   ;; no initial value
-    (setq necromancer--mode
-          (cond
-           ((member choice necromancer--known-modes) choice)
-           ((member necromancer--role necromancer--known-modes) necromancer--mode)
-           (t (first necromancer--known-modes))))
-    (message "Mode set to: %s" necromancer--mode)))
+(defvar necromancer--mode-map
+  (make-sparse-keymap "Necromancer mode: [c]ode [C]ode_review [d]esign_review [p]suedocode [P]anel [q]&A"))
 
-(global-set-key (kbd "C-c m") 'necromancer--set-mode)
+(define-key necromancer--mode-map (kbd "c")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "code")
+    (message "Coding mode")))
+
+(define-key necromancer--mode-map (kbd "q")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "answer")
+    (message "Q&A mode")))
+
+(define-key necromancer--mode-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_code")
+    (message "Code review mode")))
+
+(define-key necromancer--mode-map (kbd "d")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_design")
+    (message "Design review mode")))
+
+(define-key necromancer--mode-map (kbd "p")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "sketch")
+    (message "Sketch psuedocode")))
+
+(define-key necromancer--mode-map (kbd "P")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "panel")
+    (message "Panel of experts: ML infa + SRE + Solutions Architect")))
+
+(global-set-key (kbd "C-c j") necromancer--mode-map)
+
 
 ;; don't change these, they match strings hard coded in templates
 (defun necromancer--annotate-task ()
@@ -414,7 +432,93 @@
    ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
    ((string-equal necromancer--mode "review_design") "DESIGN FOR REVIEW")
    ((string-equal necromancer--mode "sketch")        "DESIGN REFINEMENT")))
- 
+
+
+;; input: input-manner
+
+(defvar necromancer--input-manner-map
+  (make-sparse-keymap "Necromancer input: [-]region/task [0]+goal/context [1]+preamble [2]+postamble [RET]accept default"))
+
+(define-key necromancer--input-manner-map (kbd "-")
+  (lambda ()
+    (interactive)
+    (setq necromancer--input-manner -1)
+    (message "Input mode: region, task")))
+
+(define-key necromancer--input-manner-map (kbd "0")
+  (lambda ()
+    (interactive)
+    (setq necromancer--input-manner 0)
+    (message "Input mode: goal, context, region, task")))
+
+(define-key necromancer--input-manner-map (kbd "1")
+  (lambda ()
+    (interactive)
+    (setq necromancer--input-manner 1)
+    (message "Input mode: goal, context, preamble, region, task")))
+
+(define-key necromancer--input-manner-map (kbd "2")
+  (lambda ()
+    (interactive)
+    (setq necromancer--input-manner 2)
+    (message "Input mode: goal, context, preamble, region, postamble, task")))
+
+(define-key necromancer--input-manner-map (kbd "RET")
+  (lambda ()
+    (interactive)
+    (setq necromancer--input-manner nil)
+    (message "Input mode: accept defaults")))
+
+(global-set-key (kbd "C-c i") necromancer--input-manner-map)
+
+
+
+
+
+;; input: output-manner
+
+(defvar necromancer--output-manner-map
+  (make-sparse-keymap "Necromancer output mode: [-]above [0]overwrite [1]below [2]eof [RET]accept defaults [DEL]no_op"))
+
+(define-key necromancer--output-manner-map (kbd "-")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner -1)
+    (message "Completion will be inserted ABOVE the selected region")))
+
+(define-key necromancer--output-manner-map (kbd "0")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner 0)
+    (message "Completion will OVERWRITE the selected region")))
+
+(define-key necromancer--output-manner-map (kbd "1")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner 1)
+    (message "Completion will be inserted BELOW the selected region")))
+
+(define-key necromancer--output-manner-map (kbd "2")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner 2)
+    (message "Completion will be inserted at the END OF THE BUFFER")))
+
+(define-key necromancer--output-manner-map (kbd "RET")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner nil)
+    (message "Output mode: accept defaults")))
+
+(define-key necromancer--output-manner-map (kbd "RET")
+  (lambda ()
+    (interactive)
+    (setq necromancer--output-manner nil)
+    (message "Ouput mode: None. Next command will be a no_op")))
+
+(global-set-key (kbd "C-c o") necromancer--output-manner-map)
+
+
 
 
 
@@ -579,6 +683,8 @@
     (goto-char insert-pos)
     (message "Necromancing... (this may take a moment)")
     (setq-local gptel-include-reasoning necromancer--thinking-buffer)
+    (with-current-buffer necromancer--thinking-buffer
+      (erase-buffer))
     (gptel-request user-prompt-text
       :buffer (current-buffer)
       :position (point-marker)
@@ -600,9 +706,41 @@
   (necromancer--edit-task)
   (necromancer--build-system-prompt)
   (necromancer--build-user-prompt (or necromancer--input-manner
-				      (if (use-region-p)
-					  0
-					  1)))
-  (necromancer--send))
+				                              (if (use-region-p)
+					                                0
+					                              1)))
+  (necromancer--send)
+  (setf necromancer--input-manner nil)
+  )
 
 (global-set-key (kbd "C-c RET") 'necromancer)
+
+
+
+(defun necromancer--generate-state-string ()
+  (if necromancer-mode
+      (format " Necro:%s/%s"
+              (cond
+               ((equal necromancer--role "architect") "arch")
+               (t                                     necromancer--role))
+              (cond
+               ((equal necromancer--mode "answer")        "q&a")
+               ((equal necromancer--mode "review_code")    "cr")
+               ((equal necromancer--mode "review_design")  "dr")
+               ((equal necromancer--mode "sketch")         "pseudo")
+               (t                                          necromancer--mode))
+              necromancer--role
+              necromancer--mode)
+    ""))
+
+
+(define-minor-mode necromancer-mode
+  "Display Necromancer variables in the mode line"
+  :lighter (:eval (necromancer--generate-state-string))
+  :global t
+  :init-value nil)
+
+
+;;   (force-mode-line-update)
+
+
