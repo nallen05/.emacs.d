@@ -31,28 +31,132 @@
 
 ;; SCRATCH
 ;;  * gptel-abort
-;;  *  custom prefix map: https://chatgpt.com/c/68e4365f-cd2c-8333-a5cf-3c5d22a0b1f9
 
 
-(gptel-make-gemini "Gemini"
-  :key 'gptel-api-key  ; or specify your Gemini API key
-  :stream t)
 
-(setq gptel-backend
-      (gptel-make-gemini "Gemini"
-        :key (getenv "GEMINI_API_KEY")
-        :stream t))
-
-(setq gptel-model "gemini-2.5-flash-lite")
-
-
-;; main configuration
+;; filesystem
 
 (defvar necromancer--project-dir "~/"
   "used for expanding references inside context")
 
 (defvar necromancer--template-dir "~/.emacs.d/templates/"
   "for finding templates needed to build prompts")
+
+
+;; configuring gptel backends
+
+(defvar necromancer--model nil)
+
+(defvar necromancer--model-configs
+  '((:name "gemini-2.5-pro"        :nickname "pro"         :provider :gemini      :api-key-env "GEMINI_API_KEY")
+    (:name "gemini-2.5-flash"      :nickname "flash"       :provider :gemini      :api-key-env "GEMINI_API_KEY")
+    (:name "gemini-2.5-flash-lite" :nickname "flash-light" :provider :gemini      :api-key-env "GEMINI_API_KEY")
+    (:name "claude-opus-4-1"         :nickname "opus-4.1"    :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")
+    (:name "claude-opus-4"           :nickname "opus-4"      :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")
+    (:name "claude-sonnet-4-5"       :nickname "sonnet-4.5"  :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")
+    (:name "claude-sonnet-4"         :nickname "sonnet-4"    :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")
+    (:name "claude-3-7-sonnet-latest" :nickname "sonnet-3.7"  :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")
+    (:name "claude-3-5-haiku-latest"  :nickname "haiku-3.5"   :provider :anthropic   :api-key-env "ANTHROPIC_API_KEY")))
+    
+(defvar necromancer--gemini-backend nil)
+(defvar necromancer--anthropic-backend nil)
+
+;;; Helper functions:
+
+(defun necromancer--get-config-by (key value)
+  "Find a model configuration from NECROMANCER--MODEL-CONFIGS."
+  (catch 'found
+    (dolist (config necromancer--model-configs nil)
+      (when (equal (plist-get config key) value)
+        (throw 'found config)))))
+
+(defun necromancer--hydrate-model (nickname)
+  "Given a NICKNAME, return the full model name string."
+  (let ((config (necromancer--get-config-by :nickname nickname)))
+    (when config
+      (plist-get config :name))))
+
+(defun necromancer--dehydrate-model (name)
+  "Given a full MODEL-NAME, return its nickname string."
+  (let ((config (necromancer--get-config-by :name name)))
+    (when config
+      (plist-get config :nickname))))
+
+(defun necromancer--get-available-model-nicknames ()
+  "Return a list of all model nicknames for completion."
+  (mapcar (lambda (config) (plist-get config :nickname))
+          necromancer--model-configs))
+
+(defun necromancer--set-model ()
+  "Set `necromancer--model` interactively with completion."
+  (interactive)
+  (let* ((nicknames (necromancer--get-available-model-nicknames))
+         (current-nickname (necromancer--dehydrate-model necromancer--model))
+         (choice (completing-read (concat "Select model (current: "
+                                          (propertize current-nickname 'face 'bold)
+                                          "): ")
+                                  nicknames
+                                  nil ; predicate
+                                  t   ; require-match
+                                  nil ; initial-input
+                                  )))
+    (when (and choice (not (string-empty-p choice)))
+      (let ((full-name (necromancer--hydrate-model choice)))
+        (if full-name
+            (progn
+              (setq necromancer--model full-name)
+              (message "Model set to: %s" choice))
+          (message "Unknown model nickname: %s" choice))))))
+
+(defun necromancer--initialize-gptel-backends ()
+  "Initialize GPTel backend instances for known providers if they are not already set.
+API keys are retrieved from their respective environment variables.
+Warnings are logged if an API key is missing for a provider."
+  
+  ;; Initialize Gemini backend
+  (let ((api-key (getenv "GEMINI_API_KEY")))
+    (if api-key
+        (setq necromancer--gemini-backend
+              (gptel-make-gemini "Gemini" :key api-key :stream t))
+      (error "MISSING GEMINI_API_KEY")))
+
+  ;; Initialize Anthropic backend
+  (let ((api-key (getenv "ANTHROPIC_API_KEY")))
+    (if api-key
+        (setq necromancer--anthropic-backend
+              (gptel-make-anthropic "Anthropic" :key api-key :stream t))
+      (error "MISSING ANTHROPIC_API_KEY"))))
+
+(defun necromancer--configure-gptel-backend-and-model ()
+  "Set `gptel-backend` and `gptel-model` based on `necromancer--model`."
+  (unless necromancer--model
+    (error "NECROMANCER--MODEL not set!"))
+
+  (let* ((config (necromancer--get-config-by :name necromancer--model))
+         (provider (plist-get config :provider)))
+    (cond
+      ((eq provider :gemini)     (setq gptel-backend necromancer--gemini-backend))
+      ((eq provider :anthropic) (setq gptel-backend necromancer--anthropic-backend))
+      (t (error "Unknown provider '%s' for model '%s'" provider necromancer--model)))
+
+    (setq gptel-model necromancer--model)))
+
+;; Run initialization at load time.
+(necromancer--initialize-gptel-backends)
+
+
+
+;; (gptel-make-gemini "Gemini"
+;;   :key 'gptel-api-key  ; or specify your Gemini API key
+;;   :stream t)
+
+;; (setq gptel-backend
+;;       (gptel-make-gemini "Gemini"
+;;         :key (getenv "GEMINI_API_KEY")
+;;         :stream t))
+
+;; (setq gptel-model "gemini-2.5-flash-lite")
+
 
 
 
@@ -913,6 +1017,8 @@
 
 
 
+;; sending requests to LLM
+
 (defun necromancer--send ()
   "Send context buffer + region/buffer-to-point to LLM, rewrite selection.
 The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
@@ -925,7 +1031,8 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
      The sidebar buffer is created if it doesn't exist and cleared if it does.
      The current buffer is not switched."
   (interactive)
-  (setq gptel-model necromancer--model)
+;;  (setq gptel-model necromancer--model)
+  (necromancer--configure-gptel-backend-and-model)
   (setq gptel--num-messages-to-send 1)
   (let* ((system-prompt-buffer (get-buffer necromancer--system-prompt-buffer))
          (system-prompt-text (with-current-buffer system-prompt-buffer
@@ -977,9 +1084,8 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
         (delete-region region-start region-end))
       (goto-char effective-insert-point)
       ;; Update the target position marker after point movement or region deletion
-      (setq target-position-marker (point-marker)))
-
-    (setq-local gptel-include-reasoning necromancer--thinking-buffer)
+      (setq target-position-marker (point-marker))
+      (setq-local gptel-include-reasoning necromancer--thinking-buffer))
 
     ;; Only send the GPTEL request if output manner is not NIL
     (when necromancer--output-manner
