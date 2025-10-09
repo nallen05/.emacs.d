@@ -593,7 +593,7 @@ Warnings are logged if an API key is missing for a provider."
    ((string-equal necromancer--mode "panel")         "DISCUSSION FOCUS")
    ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
    ((string-equal necromancer--mode "review_design") "ANALYSIS FOCUS")
-   ((string-equal necromancer--mode "sketch")        "DESIGN REFINEMENT")))
+   ((string-equal necromancer--mode "sketch")        "ANALYSIS FOCUS")))
 
 
 
