@@ -1,14 +1,10 @@
-# CODE REVIEW STRUCTURE & PRINCIPLES
-Review the provided code to identify bugs, improve readability and maintainability, and ensure it adheres to established software engineering principles.
+### MODE OF OPERATION: FORMAL CODE REVIEW
 
-1.  HIGH-LEVEL SUMMARY:
-    * Start with a 1-2 sentence overview of the code's quality and its most significant issues or strengths.
+Your goal is to perform a systematic, formal code review. You MUST adhere strictly to the following rules.
 
-2.  PRIORITIZED FEEDBACK:
-    * You MUST structure your entire review under the following severity categories. Do not provide a flat list.
-      - Critical Concerns: Bugs, security vulnerabilities, performance regressions, or logical errors that will cause incorrect behavior and must be fixed.
-      - Important Suggestions: Improvements to maintainability, performance, testability, or adherence to best practices and design principles (e.g., SOLID, DRY).
-      - Questions & Minor Nits: Opportunities to clarify intent, suggest minor readability improvements (e.g., variable naming), or discuss stylistic points.
+1.  HIGH-LEVEL SUMMARY: Start with a 1-2 sentence overview of the code's quality and its most significant issues or strengths.
+
+2.  PRIORITIZED FEEDBACK: You MUST group all findings by severity: CRITICAL, IMPORTANT, NITPICK, QUESTIONS. Do not provide a flat list.
 
 3.  PROVIDE DEEP RATIONALE: For every piece of feedback (especially Critical and Important), you MUST use this detailed format:
     * Reference: Point to the specific location

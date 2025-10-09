@@ -502,6 +502,7 @@ Warnings are logged if an API key is missing for a provider."
   '("answer"
     "code"
     "component"
+    "fix"
     "requirement"
     "review_code"
     "review_design"
@@ -509,7 +510,7 @@ Warnings are logged if an API key is missing for a provider."
     "sketch"))
 
 (defvar necromancer--mode-map
-  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_big [c]code [C]ode_review [R]isk [p]anel [q]&a"))
+  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_big [c]code [f]ix [q]&a [C]ode_review [R]isk [x]panel"))
 
 (define-key necromancer--mode-map (kbd "r")
   (lambda ()
@@ -539,19 +540,12 @@ Warnings are logged if an API key is missing for a provider."
     (force-mode-line-update t)
     (message "Write code!!")))
 
-(define-key necromancer--mode-map (kbd "C")
+(define-key necromancer--mode-map (kbd "f")
   (lambda ()
     (interactive)
-    (setq necromancer--mode "review_code")
+    (setq necromancer--mode "code")
     (force-mode-line-update t)
-    (message "Code review (help/question or formal review/feedback)")))
-
-(define-key necromancer--mode-map (kbd "R")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "review_design")
-    (force-mode-line-update t)
-    (message "Design review + risk/gotchas")))
+    (message "Code fix & explanation!!")))
 
 (define-key necromancer--mode-map (kbd "q")
   (lambda ()
@@ -559,6 +553,20 @@ Warnings are logged if an API key is missing for a provider."
     (setq necromancer--mode "answer")
     (force-mode-line-update t)
     (message "Q&A. Default verbose. (Triggers: \"concisely:\", \"briefly:\",  \"quick:\")")))
+
+(define-key necromancer--mode-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
+    (message "Formal code review")))
+
+(define-key necromancer--mode-map (kbd "R")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
+    (message "Formal design review + risk/gotchas")))
 
 (global-set-key (kbd "C-c j") necromancer--mode-map)
 
@@ -569,6 +577,7 @@ Warnings are logged if an API key is missing for a provider."
    ((string-equal necromancer--mode "answer")        "QUERY")
    ((string-equal necromancer--mode "code")          "CODING TASK")
    ((string-equal necromancer--mode "component")     "ENGINEERING DESIGN TASK")
+   ((string-equal necromancer--mode "fix")           "TASK: CODE FIX")
    ((string-equal necromancer--mode "panel")         "DISCUSSION")
    ((string-equal necromancer--mode "review_code")   "CODE REVIEW TASK")
    ((string-equal necromancer--mode "review_design") "ENGINEERING REVIEW TASK")
@@ -580,6 +589,7 @@ Warnings are logged if an API key is missing for a provider."
    ((string-equal necromancer--mode "answer")        "QUERY CONTEXT")
    ((string-equal necromancer--mode "code")          "REFACTOR")
    ((string-equal necromancer--mode "component")     "DESIGN REFINEMENT")
+   ((string-equal necromancer--mode "fix")           "ANALYSIS REGION")
    ((string-equal necromancer--mode "panel")         "DISCUSSION FOCUS")
    ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
    ((string-equal necromancer--mode "review_design") "ANALYSIS FOCUS")
@@ -601,7 +611,7 @@ Warnings are logged if an API key is missing for a provider."
     "sketch"))
 
 (defvar necromancer--combo-map
-  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_arch [c]code [C]ode_review [R]isk [p]anel [q]&a"))
+  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_arch [c]code [f]ix [q]&a [C]ode_review [R]isk [x]panel"))
 
 (define-key necromancer--combo-map (kbd "r")
   (lambda ()
@@ -635,21 +645,13 @@ Warnings are logged if an API key is missing for a provider."
     (force-mode-line-update t)
     (message "Write code by Python dev")))
 
-(define-key necromancer--combo-map (kbd "C")
+(define-key necromancer--combo-map (kbd "f")
   (lambda ()
     (interactive)
     (setq necromancer--role "staff")
-    (setq necromancer--mode "review_code")
+    (setq necromancer--mode "fix")
     (force-mode-line-update t)
-    (message "Code review, by senior staff engineer (help/question or formal review/feedback)")))
-
-(define-key necromancer--combo-map (kbd "R")
-  (lambda ()
-    (interactive)
-    (setq necromancer--role "staff")
-    (setq necromancer--mode "review_design")
-    (force-mode-line-update t)
-    (message "Design review + risk/gotchas analysis, by senior staff engineer")))
+    (message "Code fix & explanation, by senior staff engineer")))
 
 (define-key necromancer--combo-map (kbd "q")
   (lambda ()
@@ -659,7 +661,23 @@ Warnings are logged if an API key is missing for a provider."
     (force-mode-line-update t)
     (message (format "Q&A by %s. Default verbose. (Triggers: \"concisely:\", \"briefly:\",  \"quick:\")" necromancer--role))))
 
-(define-key necromancer--combo-map (kbd "p")
+(define-key necromancer--combo-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "staff")
+    (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
+    (message "Formal code review, by senior staff engineer")))
+
+(define-key necromancer--combo-map (kbd "R")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "staff")
+    (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
+    (message "Formal design review + risk/gotchas analysis, by senior staff engineer")))
+
+(define-key necromancer--combo-map (kbd "x")
   (lambda ()
     (interactive)
     (setq necromancer--role "panel")
