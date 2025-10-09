@@ -7,14 +7,15 @@
 
 ;; C-c M             edit model
 ;; C-c g             edit goal
-;; C-c r             edit role
-;; C-c j             edit job mode
+;; C-c r             set role
+;; C-c j             set job/mode
+;; C-c n             set role+job combo
 ;; C-c c             edit context
-;; C-c i             edit input manner (-1=region/task, 0=+goal/context, 1=+preamble, 2=+postamble)
-;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, 3=sidebar, DEL=no_op)
+;; C-c i             set input manner (-1=region/task, 0=+goal/context, 1=+preamble, 2=+postamble)
+;; C-c o             set output manner (-1=above, 0=overwrite, 1=below, 2=eof, 3=sidebar, DEL=no_op)
 ;; C-c RET           run necromancer (it will first launch edit task)
 ;; C-c s             open sidebar buffer (this window)
-;; C-c S             change sidebar buf4fer
+;; C-c S             change sidebar buffer
 ;;
 ;; C-c s <var>       within this buffer, shadow <var>
 ;; C-c S <var>       kill the buffer local shadow; global will be used instead
