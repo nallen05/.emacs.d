@@ -1,3 +1,2 @@
 # CODE REVIEW FOCUS
-1.  TARGETED ANALYSIS: Your review applies exclusively to the code found between the `# START CODE FOR REVIEW` and `# STOP CODE FOR REVIEW` markers.
-2.  OUTPUT FORMAT: Provide your feedback as a concise, actionable list of observations and suggestions. Focus on correctness, clarity, and performance.
+Your review applies exclusively to the code found between the `# START CODE FOR REVIEW` and `# STOP CODE FOR REVIEW` markers.
