@@ -574,14 +574,14 @@ Warnings are logged if an API key is missing for a provider."
 ;; don't change these, they match strings hard coded in templates
 (defun necromancer--annotate-task ()
   (cond
-   ((string-equal necromancer--mode "answer")        "QUERY")
-   ((string-equal necromancer--mode "code")          "CODING TASK")
-   ((string-equal necromancer--mode "component")     "ENGINEERING DESIGN TASK")
-   ((string-equal necromancer--mode "fix")           "TASK: CODE FIX")
-   ((string-equal necromancer--mode "panel")         "DISCUSSION")
-   ((string-equal necromancer--mode "review_code")   "CODE REVIEW TASK")
-   ((string-equal necromancer--mode "review_design") "ENGINEERING REVIEW TASK")
-   ((string-equal necromancer--mode "sketch")        "SOLUTION DESIGN TASK")))
+   ((string-equal necromancer--mode "answer")        "TASK: ANSWER QUESTION")
+   ((string-equal necromancer--mode "code")          "TASK: WRITE CODE")
+   ((string-equal necromancer--mode "component")     "TASK: DESIGN COMPONENT")
+   ((string-equal necromancer--mode "fix")           "TASK: FIX CODE")
+   ((string-equal necromancer--mode "panel")         "TASK: DISCUSS TOPIC")
+   ((string-equal necromancer--mode "review_code")   "TASK: REVIEW CODE")
+   ((string-equal necromancer--mode "review_design") "TASK: REVIEW SOLUTION")
+   ((string-equal necromancer--mode "sketch")        "TASK: DESIGN SOLUTION")))
 
 ;; don't change these, they match strings hard coded in templates
 (defun necromancer--annotate-region ()
