@@ -445,7 +445,7 @@ Warnings are logged if an API key is missing for a provider."
     (interactive)
     (setq necromancer--role "analyst")
     (force-mode-line-update t)
-    (message "Product Analyst = Problem -> Requirements")))
+    (message "Product Analyst")))
 
 (define-key necromancer--role-map (kbd "A")
   (lambda ()
@@ -516,7 +516,7 @@ Warnings are logged if an API key is missing for a provider."
     (interactive)
     (setq necromancer--mode "requirement")
     (force-mode-line-update t)
-    (message "Requirements analysis")))
+    (message "Requirements analysis. Exploratory or document generation/modification")))
 
 (define-key necromancer--mode-map (kbd "d")
   (lambda ()
@@ -544,21 +544,21 @@ Warnings are logged if an API key is missing for a provider."
     (interactive)
     (setq necromancer--mode "review_code")
     (force-mode-line-update t)
-    (message "Code review")))
+    (message "Code review (help/question or formal review/feedback)")))
 
 (define-key necromancer--mode-map (kbd "R")
   (lambda ()
     (interactive)
     (setq necromancer--mode "review_design")
     (force-mode-line-update t)
-    (message "Design review. Risk & gotchas")))
+    (message "Design review + risk/gotchas")))
 
 (define-key necromancer--mode-map (kbd "q")
   (lambda ()
     (interactive)
     (setq necromancer--mode "answer")
     (force-mode-line-update t)
-    (message "Q&A mode")))
+    (message "Q&A. Default verbose. (Triggers: \"concisely:\", \"briefly:\",  \"quick:\")")))
 
 (global-set-key (kbd "C-c j") necromancer--mode-map)
 
@@ -588,76 +588,7 @@ Warnings are logged if an API key is missing for a provider."
 
 
 
-
-;; inputs: task + role combos
-
-(defvar necromancer--known-combos
-  '("answer"
-    "code"
-    "component"
-    "requirement"
-    "review_code"
-    "review_design"
-    "panel"
-    "sketch"))
-
-(defvar necromancer--mode-map
-  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_arch [c]code [C]ode_review [R]isk [p]anel [q]&a"))
-
-(define-key necromancer--mode-map (kbd "r")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "requirement")
-    (force-mode-line-update t)
-    (message "Requirements analysis")))
-
-(define-key necromancer--mode-map (kbd "d")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "sketch")
-    (force-mode-line-update t)
-    (message "Per-component design (psuedocode)")))
-
-(define-key necromancer--mode-map (kbd "D")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "sketch")
-    (force-mode-line-update t)
-    (message "Big picture systems design (pseudocode)")))
-  
-(define-key necromancer--mode-map (kbd "c")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "code")
-    (force-mode-line-update t)
-    (message "Write code!!")))
-
-(define-key necromancer--mode-map (kbd "C")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "review_code")
-    (force-mode-line-update t)
-    (message "Code review")))
-
-(define-key necromancer--mode-map (kbd "R")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "review_design")
-    (force-mode-line-update t)
-    (message "Design review. Risk & gotchas")))
-
-(define-key necromancer--mode-map (kbd "q")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "answer")
-    (force-mode-line-update t)
-    (message "Q&A mode")))
-
-(global-set-key (kbd "C-c j") necromancer--mode-map)
-
-
-
-
+;; inputs: role+job combos
 
 (defvar necromancer--known-combos
   '("answer"
@@ -678,7 +609,7 @@ Warnings are logged if an API key is missing for a provider."
     (setq necromancer--role "analyst")
     (setq necromancer--mode "requirement")
     (force-mode-line-update t)
-    (message "Requirements analysis by product analyst")))
+    (message "Requirements analysis by product analyst. Exploratory or document generation/modification")))
 
 (define-key necromancer--combo-map (kbd "d")
   (lambda ()
@@ -710,7 +641,7 @@ Warnings are logged if an API key is missing for a provider."
     (setq necromancer--role "staff")
     (setq necromancer--mode "review_code")
     (force-mode-line-update t)
-    (message "Code review, by senior staff engineer")))
+    (message "Code review, by senior staff engineer (help/question or formal review/feedback)")))
 
 (define-key necromancer--combo-map (kbd "R")
   (lambda ()
@@ -718,7 +649,7 @@ Warnings are logged if an API key is missing for a provider."
     (setq necromancer--role "staff")
     (setq necromancer--mode "review_design")
     (force-mode-line-update t)
-    (message "Design review. Risk & gotchas. By senior staff engineer")))
+    (message "Design review + risk/gotchas analysis, by senior staff engineer")))
 
 (define-key necromancer--combo-map (kbd "q")
   (lambda ()
@@ -726,7 +657,7 @@ Warnings are logged if an API key is missing for a provider."
     ;; no default role for Q&A
     (setq necromancer--mode "answer")
     (force-mode-line-update t)
-    (message (format "Q&A by %s" necromancer--role))))
+    (message (format "Q&A by %s. Default verbose. (Triggers: \"concisely:\", \"briefly:\",  \"quick:\")" necromancer--role))))
 
 (define-key necromancer--combo-map (kbd "p")
   (lambda ()
