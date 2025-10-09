@@ -1149,7 +1149,7 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
 
 (defun necromancer--generate-state-string ()
   (if necromancer-mode
-      (format " Necro:%s,%s%s"
+      (format " Necro:%s/%s;%s/%s (%s)"
               (cond
                ((equal necromancer--role "architect") "arch")
                (t                                     necromancer--role))
@@ -1157,23 +1157,21 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
                ((equal necromancer--mode "answer")        "q&a")
                ((equal necromancer--mode "review_code")    "cr")
                ((equal necromancer--mode "review_design")  "dr")
-               ((equal necromancer--mode "sketch")         "pseudo")
-               (t                                          necromancer--mode))
-              (if (or necromancer--input-manner
-                      necromancer--output-manner)
-                  (format ",%s/%s"
-                          (cond
-                            ((equal necromancer--input-manner -1) "n")
-                            ((equal necromancer--input-manner 0)  "c")
-                            ((equal necromancer--input-manner 1)  "p")
-                            ((equal necromancer--input-manner 2)  "t"))
-                          (cond
-                           ((equal necromancer--output-manner -1) "b")
-                           ((equal necromancer--output-manner 0)  "o")
-                           ((equal necromancer--output-manner 1)  "a")
-                           ((equal necromancer--output-manner 2)  "e")
-                           ((equal necromancer--output-manner 3)  "s")))
-                ""))
+               ((equal necromancer--mode "sketch")         "pseudo"))
+              (cond
+               ((equal necromancer--input-manner -1) "n")
+               ((equal necromancer--input-manner 0)  "c")
+               ((equal necromancer--input-manner 1)  "p")
+               ((equal necromancer--input-manner 2)  "t"))
+              (cond
+               ((equal necromancer--output-manner -1) "b")
+               ((equal necromancer--output-manner 0)  "o")
+               ((equal necromancer--output-manner 1)  "a")
+               ((equal necromancer--output-manner 2)  "e")
+               ((equal necromancer--output-manner 3)  "s"))
+              (when necromancer--model
+                (necromancer--dehydrate-model necromancer--model))
+              )
     ""))
 
 ;;   (force-mode-line-update)
