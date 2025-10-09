@@ -110,7 +110,7 @@
 (setq gptel-model 'gemini-2.5-flash
       gptel-backend (gptel-make-gemini "Gemini"
                       :key (getenv "GEMINI_API_KEY")
-                      :stream t)
+                      :stream t))
 
 ;; default setup (openai)
 
