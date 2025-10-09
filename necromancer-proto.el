@@ -5,7 +5,7 @@
 ;; M-x necromancer-mode     turn on/off mode to show variables in mode line
 
 
-;; C-c ~             edit model
+;; C-c M             edit model
 ;; C-c g             edit goal
 ;; C-c r             edit role
 ;; C-c j             edit job mode
@@ -132,7 +132,7 @@
            (t (first necromancer--known-models))))
     (message "Model set to: %s" necromancer--model)))
 
-(global-set-key (kbd "C-c ~") 'necromancer--set-model)
+(global-set-key (kbd "C-c M") 'necromancer--set-model)
 
 
 ;; inputs: goal & context
