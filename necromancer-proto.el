@@ -92,9 +92,11 @@
   (interactive)
   (let* ((nicknames (necromancer--get-available-model-nicknames))
          (current-nickname (necromancer--dehydrate-model necromancer--model))
-         (choice (completing-read (concat "Select model (current: "
-                                          (propertize current-nickname 'face 'bold)
-                                          "): ")
+         (choice (completing-read (if current-nickname
+                                      (concat "Select model (current: "
+                                              (propertize current-nickname 'face 'bold)
+                                              "): ")
+                                    "Select model: ")
                                   nicknames
                                   nil ; predicate
                                   t   ; require-match
@@ -107,6 +109,8 @@
               (setq necromancer--model full-name)
               (message "Model set to: %s" choice))
           (message "Unknown model nickname: %s" choice))))))
+
+(global-set-key (kbd "C-c M") 'necromancer--set-model)
 
 (defun necromancer--initialize-gptel-backends ()
   "Initialize GPTel backend instances for known providers if they are not already set.
@@ -210,30 +214,30 @@ Warnings are logged if an API key is missing for a provider."
 
 ;; input: model
 
-(defvar necromancer--model "gemini-2.5-flash-lite")
+;; (defvar necromancer--model "gemini-2.5-flash-lite")
 
-(defvar necromancer--known-models
-  '("gemini-2.5-pro"
-    "gemini-2.5-flash"
-    "gemini-2.5-flash-lite"))
+;; (defvar necromancer--known-models
+;;   '("gemini-2.5-pro"
+;;     "gemini-2.5-flash"
+;;     "gemini-2.5-flash-lite"))
 
-(defun necromancer--set-model ()
-  (interactive)
-  (let ((choice (completing-read (concat "Select model (current: "
-			                                   (propertize necromancer--model 'face 'bold)
-			                                   ") :")
-                                 necromancer--known-models
-                                 nil                      ;; predicate (not needed here)
-                                 t                        ;; require match
-                                 nil)))                   ;; no initial value
-    (setq necromancer--model
-          (cond
-           ((member choice necromancer--known-models) choice)
-           ((member necromancer--model necromancer--known-models) necromancer--model)
-           (t (first necromancer--known-models))))
-    (message "Model set to: %s" necromancer--model)))
+;; (defun necromancer--set-model ()
+;;   (interactive)
+;;   (let ((choice (completing-read (concat "Select model (current: "
+;; 			                                   (propertize necromancer--model 'face 'bold)
+;; 			                                   ") :")
+;;                                  necromancer--known-models
+;;                                  nil                      ;; predicate (not needed here)
+;;                                  t                        ;; require match
+;;                                  nil)))                   ;; no initial value
+;;     (setq necromancer--model
+;;           (cond
+;;            ((member choice necromancer--known-models) choice)
+;;            ((member necromancer--model necromancer--known-models) necromancer--model)
+;;            (t (first necromancer--known-models))))
+;;     (message "Model set to: %s" necromancer--model)))
 
-(global-set-key (kbd "C-c M") 'necromancer--set-model)
+;;(global-set-key (kbd "C-c M") 'necromancer--set-model)
 
 
 ;; inputs: goal & context
@@ -1104,9 +1108,11 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
                (t                                     necromancer--role))
               (cond
                ((equal necromancer--mode "answer")        "q&a")
-               ((equal necromancer--mode "review_code")    "cr")
-               ((equal necromancer--mode "review_design")  "dr")
-               ((equal necromancer--mode "sketch")         "pseudo"))
+               ((equal necromancer--mode "requirement" )  "req")
+               ((equal necromancer--mode "review_code")   "cr")
+               ((equal necromancer--mode "review_design") "dr")
+               ((equal necromancer--mode "sketch")        "pseudo")
+               (t                                     necromancer--mode))
               (cond
                ((equal necromancer--input-manner -1) "x")
                ((equal necromancer--input-manner 0)  "c")
