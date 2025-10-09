@@ -322,7 +322,7 @@
 
 
 
-;; inputs: role & job
+;; inputs: role
 
 (defvar necromancer--role "dev")
 
@@ -342,7 +342,7 @@
 (define-key necromancer--role-map (kbd "a")
   (lambda ()
     (interactive)
-    (setq necromancer--role "architect")
+    (setq necromancer--role "analyst")
     (force-mode-line-update t)
     (message "Product Analyst = Problem -> Requirements")))
 
@@ -390,6 +390,11 @@
 
 (global-set-key (kbd "C-c r") necromancer--role-map)
 
+
+
+
+;; inputs: job
+
 (defvar necromancer--mode "code")
 
 (defvar necromancer--known-modes
@@ -415,7 +420,7 @@
 (define-key necromancer--mode-map (kbd "d")
   (lambda ()
     (interactive)
-    (setq necromancer--mode "sketch")
+    (setq necromancer--mode "component")
     (force-mode-line-update t)
     (message "Per-component design (psuedocode)")))
 
@@ -478,6 +483,154 @@
    ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
    ((string-equal necromancer--mode "review_design") "ANALYSIS FOCUS")
    ((string-equal necromancer--mode "sketch")        "DESIGN REFINEMENT")))
+
+
+
+
+
+;; inputs: task + role combos
+
+(defvar necromancer--known-combos
+  '("answer"
+    "code"
+    "component"
+    "requirement"
+    "review_code"
+    "review_design"
+    "panel"
+    "sketch"))
+
+(defvar necromancer--mode-map
+  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_arch [c]code [C]ode_review [R]isk [p]anel [q]&a"))
+
+(define-key necromancer--mode-map (kbd "r")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "requirement")
+    (force-mode-line-update t)
+    (message "Requirements analysis")))
+
+(define-key necromancer--mode-map (kbd "d")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
+    (message "Per-component design (psuedocode)")))
+
+(define-key necromancer--mode-map (kbd "D")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
+    (message "Big picture systems design (pseudocode)")))
+  
+(define-key necromancer--mode-map (kbd "c")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "code")
+    (force-mode-line-update t)
+    (message "Write code!!")))
+
+(define-key necromancer--mode-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
+    (message "Code review")))
+
+(define-key necromancer--mode-map (kbd "R")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
+    (message "Design review. Risk & gotchas")))
+
+(define-key necromancer--mode-map (kbd "q")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "answer")
+    (force-mode-line-update t)
+    (message "Q&A mode")))
+
+(global-set-key (kbd "C-c j") necromancer--mode-map)
+
+
+
+
+
+(defvar necromancer--known-combos
+  '("answer"
+    "code"
+    "component"
+    "requirement"
+    "review_code"
+    "review_design"
+    "panel"
+    "sketch"))
+
+(defvar necromancer--combo-map
+  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_arch [c]code [C]ode_review [R]isk [p]anel [q]&a"))
+
+(define-key necromancer--combo-map (kbd "r")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "analyst")
+    (setq necromancer--mode "requirement")
+    (force-mode-line-update t)
+    (message "Requirements analysis by product analyst")))
+
+(define-key necromancer--combo-map (kbd "d")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "python")
+    (setq necromancer--mode "component")
+    (force-mode-line-update t)
+    (message "Per-component design (psuedocode) by Python dev")))
+
+(define-key necromancer--combo-map (kbd "D")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "architect")
+    (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
+    (message "Big picture systems design (pseudocode) by solution architect")))
+  
+(define-key necromancer--combo-map (kbd "c")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "python")
+    (setq necromancer--mode "code")
+    (force-mode-line-update t)
+    (message "Write code by Python dev")))
+
+(define-key necromancer--combo-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "staff")
+    (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
+    (message "Code review, by senior staff engineer")))
+
+(define-key necromancer--combo-map (kbd "R")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "staff")
+    (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
+    (message "Design review. Risk & gotchas. By senior staff engineer")))
+
+(define-key necromancer--combo-map (kbd "q")
+  (lambda ()
+    (interactive)
+    ;; no default role for Q&A
+    (setq necromancer--mode "answer")
+    (force-mode-line-update t)
+    (message (format "Q&A by %s" necromancer--role))))
+
+(global-set-key (kbd "C-c n") necromancer--combo-map)
+
+
+
 
 
 ;; input: input-manner
