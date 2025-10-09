@@ -74,10 +74,6 @@
 (defvar necromancer--thinking-buffer "*necromancer-thinking*"
   "Reasoning model outputs get redirected here. Cleared upon each new request.")
 
-(defvar necromancer--buffer-sidebar  "*necromancer-sidebar*"
-  "Answers can be redirected here, so that it doesn't pollute the source file.")
-
-
 
 ;; setting variables to be buffer-local instead of global
 
@@ -628,6 +624,14 @@
     (force-mode-line-update t)
     (message (format "Q&A by %s" necromancer--role))))
 
+(define-key necromancer--combo-map (kbd "p")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "panel")
+    (setq necromancer--mode "panel")
+    (force-mode-line-update t)
+    (message (format "Panel of experts: Solution Architect + SRE + ML Infra Expert"))))
+
 (global-set-key (kbd "C-c n") necromancer--combo-map)
 
 
@@ -956,15 +960,14 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
      ((eq necromancer--output-manner 3)   ;; insert at end of sidebar buffer
       (let* ((sidebar-buf-name necromancer--sidebar-buffer)
              (sidebar-buf (get-buffer-create sidebar-buf-name)))
-        (unless sidebar-buf
-          ;; Create the buffer if it doesn't exist
-          (setq sidebar-buf (get-buffer-create sidebar-buf-name)))
         ;; Perform operations on the sidebar buffer without switching to it
         (with-current-buffer sidebar-buf
           (erase-buffer) ; Clear existing content
           ;; Set the target buffer and a marker at its end for gptel-request
           (setq target-buffer sidebar-buf)
-          (setq target-position-marker (copy-marker (point-max) t))))) ; t for 'insert-before' behavior
+          (setq target-position-marker (copy-marker (point-max) t))
+          ;; GPTEL-INCLUDE-REASONING is buffer local! needs to be set in the sidebar buffer
+          (setq-local gptel-include-reasoning necromancer--thinking-buffer))))
      (t (error "Invalid NECROMANCER--OUTPUT-MANNER")))
 
     ;; setup in current buffer if called for
@@ -977,8 +980,6 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
       (setq target-position-marker (point-marker)))
 
     (setq-local gptel-include-reasoning necromancer--thinking-buffer)
-    (with-current-buffer (get-buffer-create necromancer--thinking-buffer)
-      (erase-buffer))
 
     ;; Only send the GPTEL request if output manner is not NIL
     (when necromancer--output-manner
@@ -1015,6 +1016,14 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
     (setf necromancer--task nil))
   (when (or skip-edit-task
             (necromancer--edit-task))
+    (let ((thinking-buf (get-buffer-create necromancer--thinking-buffer)))
+      (with-current-buffer thinking-buf
+        (erase-buffer)
+        (insert (format "\n# %s: \n" (necromancer--annotate-task)))
+        (when necromancer--task
+          (insert necromancer--task)
+          (insert "\n"))
+        (insert "\n")))
     (necromancer--build-system-prompt)
     (necromancer--build-user-prompt necromancer--input-manner)
     (necromancer--send))
