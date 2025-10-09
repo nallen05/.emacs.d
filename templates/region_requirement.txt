@@ -1,0 +1,3 @@
+## REQUIREMENTS ANALYSIS FOCUS
+1.  TARGETED ANALYSIS: Your task applies exclusively to the logic and structure within the `# START ANALYSIS` and `# STOP ANALYSIS` markers.
+2.  REPLACEMENT OUTPUT: Your entire response must be only the new, refined pseudocode that will replace the demarcated section.

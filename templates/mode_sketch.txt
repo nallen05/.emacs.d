@@ -31,4 +31,4 @@ Your objective is to translate requirements into a high-level, language-agnostic
             RETURN user_profiles.get(user_id)
         ```
 
-The final output MUST be a clear and unambiguous guide that any developer could use to write production code without having to guess the architectural intent.
+The final output MUST be a clear and unambiguous guide that any developer could use to write production code without having to gue

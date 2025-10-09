@@ -1,0 +1,3 @@
+# ANALYSIS FOCUS
+1.  TARGETED ANALYSIS: Your review applies exclusively to the design document or pseudocode found between the `# START ANALYSIS FOCUS` and `# STOP ANALYSIS FOCUS` markers.
+2.  OUTPUT FORMAT: Provide your feedback as a high-level analysis. Focus on architectural soundness, logical consistency, and adherence to best practices.

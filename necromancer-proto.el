@@ -1,5 +1,5 @@
 
-write a short python hello world
+
 
 
 ;; M-x necromancer-mode     turn on/off mode to show variables in mode line
@@ -14,7 +14,7 @@ write a short python hello world
 ;; C-c o             edit output manner (-1=above, 0=overwrite, 1=below, 2=eof, 3=sidebar, DEL=no_op)
 ;; C-c RET           run necromancer (it will first launch edit task)
 ;; C-c s             open sidebar buffer (this window)
-;; C-c S             change sidebar buffer
+;; C-c S             change sidebar buf4fer
 ;;
 ;; C-c s <var>       within this buffer, shadow <var>
 ;; C-c S <var>       kill the buffer local shadow; global will be used instead
@@ -327,29 +327,38 @@ write a short python hello world
 (defvar necromancer--role "dev")
 
 (defvar necromancer--known-roles
-  '("architect"
+  '("analyst"
+    "architect"
     "dev"
     "mlops"
     "panel"
+    "python"
     "sre"
     "staff"))
 
 (defvar necromancer--role-map
-  (make-sparse-keymap "Choose role: [a]rchitect [d]ev [m]lops s[r]e [s]taff"))
+  (make-sparse-keymap "[a]analyst [A]rchitect [d]ev [p]ython_dev [s]re [S]taff_eng [m]lops"))
 
 (define-key necromancer--role-map (kbd "a")
   (lambda ()
     (interactive)
     (setq necromancer--role "architect")
     (force-mode-line-update t)
-    (message "Python solutions architect")))
+    (message "Product Analyst = Problem -> Requirements")))
+
+(define-key necromancer--role-map (kbd "A")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "architect")
+    (force-mode-line-update t)
+    (message "Software solutions architect")))
 
 (define-key necromancer--role-map (kbd "d")
   (lambda ()
     (interactive)
     (setq necromancer--role "dev")
     (force-mode-line-update t)
-    (message "Pragmatic Python developer")))
+    (message "Pragmatic developer (polyglot)")))
 
 (define-key necromancer--role-map (kbd "m")
   (lambda ()
@@ -358,12 +367,12 @@ write a short python hello world
     (force-mode-line-update t)
     (message "ML Infrastructure Engineer")))
 
-(define-key necromancer--role-map (kbd "r")
+(define-key necromancer--role-map (kbd "p")
   (lambda ()
     (interactive)
-    (setq necromancer--role "sre")
+    (setq necromancer--role "dev")
     (force-mode-line-update t)
-    (message "Site Reliability Enginer (SRE)")))
+    (message "Pragmatic developer (Python 3.13+)")))
 
 (define-key necromancer--role-map (kbd "s")
   (lambda ()
@@ -372,6 +381,13 @@ write a short python hello world
     (force-mode-line-update t)
     (message "Staff Engineer for expert code/design reviews")))
 
+(define-key necromancer--role-map (kbd "S")
+  (lambda ()
+    (interactive)
+    (setq necromancer--role "sre")
+    (force-mode-line-update t)
+    (message "Site Reliability Enginer (SRE)")))
+
 (global-set-key (kbd "C-c r") necromancer--role-map)
 
 (defvar necromancer--mode "code")
@@ -379,20 +395,57 @@ write a short python hello world
 (defvar necromancer--known-modes
   '("answer"
     "code"
+    "component"
+    "requirement"
     "review_code"
     "review_design"
     "panel"
     "sketch"))
 
 (defvar necromancer--mode-map
-  (make-sparse-keymap "Necromancer mode: [c]ode [C]ode_review [d]esign_review [p]suedocode [P]anel [q]&A"))
+  (make-sparse-keymap "[r]equirement [d]esign_code [D]esign_big [c]code [C]ode_review [R]isk [p]anel [q]&a"))
 
+(define-key necromancer--mode-map (kbd "r")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "requirement")
+    (force-mode-line-update t)
+    (message "Requirements analysis")))
+
+(define-key necromancer--mode-map (kbd "d")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
+    (message "Per-component design (psuedocode)")))
+
+(define-key necromancer--mode-map (kbd "D")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "sketch")
+    (force-mode-line-update t)
+    (message "Big picture systems design (pseudocode)")))
+  
 (define-key necromancer--mode-map (kbd "c")
   (lambda ()
     (interactive)
     (setq necromancer--mode "code")
     (force-mode-line-update t)
-    (message "Coding mode")))
+    (message "Write code!!")))
+
+(define-key necromancer--mode-map (kbd "C")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_code")
+    (force-mode-line-update t)
+    (message "Code review")))
+
+(define-key necromancer--mode-map (kbd "R")
+  (lambda ()
+    (interactive)
+    (setq necromancer--mode "review_design")
+    (force-mode-line-update t)
+    (message "Design review. Risk & gotchas")))
 
 (define-key necromancer--mode-map (kbd "q")
   (lambda ()
@@ -400,34 +453,6 @@ write a short python hello world
     (setq necromancer--mode "answer")
     (force-mode-line-update t)
     (message "Q&A mode")))
-
-(define-key necromancer--mode-map (kbd "C")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "review_code")
-    (force-mode-line-update t)
-    (message "Code review mode")))
-
-(define-key necromancer--mode-map (kbd "d")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "review_design")
-    (force-mode-line-update t)
-    (message "Design review mode")))
-
-(define-key necromancer--mode-map (kbd "p")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "sketch")
-    (force-mode-line-update t)
-    (message "Sketch psuedocode")))
-
-(define-key necromancer--mode-map (kbd "P")
-  (lambda ()
-    (interactive)
-    (setq necromancer--mode "panel")
-    (force-mode-line-update t)
-    (message "Panel of experts: ML infa + SRE + Solutions Architect")))
 
 (global-set-key (kbd "C-c j") necromancer--mode-map)
 
@@ -437,19 +462,21 @@ write a short python hello world
   (cond
    ((string-equal necromancer--mode "answer")        "QUERY")
    ((string-equal necromancer--mode "code")          "CODING TASK")
+   ((string-equal necromancer--mode "component")     "ENGINEERING DESIGN TASK")
    ((string-equal necromancer--mode "panel")         "DISCUSSION")
    ((string-equal necromancer--mode "review_code")   "CODE REVIEW TASK")
-   ((string-equal necromancer--mode "review_design") "DESIGN REVIEW TASK")
-   ((string-equal necromancer--mode "sketch")        "DESIGN TASK")))
+   ((string-equal necromancer--mode "review_design") "ENGINEERING REVIEW TASK")
+   ((string-equal necromancer--mode "sketch")        "SOLUTION DESIGN TASK")))
 
 ;; don't change these, they match strings hard coded in templates
 (defun necromancer--annotate-region ()
   (cond
    ((string-equal necromancer--mode "answer")        "QUERY CONTEXT")
    ((string-equal necromancer--mode "code")          "REFACTOR")
+   ((string-equal necromancer--mode "component")     "DESIGN REFINEMENT")
    ((string-equal necromancer--mode "panel")         "DISCUSSION FOCUS")
    ((string-equal necromancer--mode "review_code")   "CODE FOR REVIEW")
-   ((string-equal necromancer--mode "review_design") "DESIGN FOR REVIEW")
+   ((string-equal necromancer--mode "review_design") "ANALYSIS FOCUS")
    ((string-equal necromancer--mode "sketch")        "DESIGN REFINEMENT")))
 
 
@@ -510,14 +537,14 @@ write a short python hello world
 
 ;; input: output-manner
 
-(defvar necromancer--output-manner nil
+(defvar necromancer--output-manner 1
   "controls how responses are inserted:
      -1     insert ABOVE selected region
      0      OVERWRITE selected region
      1      insert AFTER selected region
      2      insert at END of current buffer
      3      insert at end of SIDEBAR buffer
-     NIL    before edit task: accept defaults; after edit task: no_op")
+     NIL    no_op")
 
 (defvar necromancer--output-manner-map
   (make-sparse-keymap "Insert responses: [a]bove [o]verwrite [b]elow [e]of [s]idebar [RET]default/no_op"))
@@ -557,19 +584,12 @@ write a short python hello world
     (force-mode-line-update t)
     (message "Completion will be inserted at the end of the SIDEBAR buffer")))
 
-(define-key necromancer--output-manner-map (kbd "RET")
-  (lambda ()
-    (interactive)
-    (setq necromancer--output-manner nil)
-    (force-mode-line-update t)
-    (message "Default or no_op")))
-
 (define-key necromancer--output-manner-map (kbd "DEL")
   (lambda ()
     (interactive)
     (setq necromancer--output-manner nil)
     (force-mode-line-update t)
-    (message "Default or no_op")))
+    (message "no_op")))
 
 (global-set-key (kbd "C-c o") necromancer--output-manner-map)
 
@@ -836,10 +856,6 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
           (if (use-region-p)
               0
             1)))
-  ;; set output defaults
-  (unless necromancer--output-manner
-    (setq necromancer--output-manner 1))
-
   (force-mode-line-update t)
   (when skip-edit-task
     (setf necromancer--task nil))
@@ -849,7 +865,6 @@ The behavior of insertion is controlled by NECROMANCER--OUTPUT-MANNER:
     (necromancer--build-user-prompt necromancer--input-manner)
     (necromancer--send))
   (setf necromancer--input-manner nil)
-  (setf necromancer--output-manner nil)
   )
 
 (global-set-key (kbd "C-c <return>") 'necromancer)
